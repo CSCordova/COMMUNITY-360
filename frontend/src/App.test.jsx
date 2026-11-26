@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from './auth';
@@ -44,6 +44,7 @@ describe('Actividad en tiempo real', () => {
   async function dashboard() {
     loggedIn = true; mount('/dashboard');
     await screen.findByText('Sesión verificada');
+    await waitFor(() => expect(TestSocket.connections.length).toBeGreaterThan(0));
     return TestSocket.connections.at(-1);
   }
   it('recibe cifras por WebSocket y actualiza sin otra consulta REST', async () => {
@@ -56,7 +57,7 @@ describe('Actividad en tiempo real', () => {
     const count = fetch.mock.calls.length;
     act(() => socket.emit({ ...snapshot(1, { total_interacciones: 208, sentimiento_promedio: -0.3 }), operacion: 'creada', id_interaccion: 'I9000001' }));
     expect(screen.getByText('208')).toBeInTheDocument();
-    expect(screen.getByText('-0.300')).toBeInTheDocument();
+    expect(within(screen.getByRole('heading', { name: 'Sentimiento promedio', exact: true }).closest('article')).getByText('-0.300')).toBeInTheDocument();
     expect(screen.getByText('Interacción creada · I9000001')).toBeInTheDocument();
     expect(fetch.mock.calls).toHaveLength(count);
   });
@@ -87,6 +88,64 @@ describe('Actividad en tiempo real', () => {
       expect(next).not.toBe(socket);
       act(() => next.emit({ ...snapshot(0, { total_interacciones: 210 }), servidor: 'reiniciado' }));
       expect(screen.getByText('210')).toBeInTheDocument();
+      expect(screen.getByText('En vivo')).toBeInTheDocument();
+    } finally { vi.useRealTimers(); }
+  });
+  it('envía los filtros por WebSocket y descarta respuestas de una selección anterior', async () => {
+    const socket = await dashboard();
+    act(() => socket.emit(snapshot(0, { opciones_filtros: { canal: ['Telegram', 'Discord'], tema: ['arte'], tipo: ['mensaje'] } })));
+    const user = userEvent.setup();
+    await user.selectOptions(screen.getByLabelText('Canal'), 'Telegram');
+    const requests = fetch.mock.calls.length;
+    await user.click(screen.getByRole('button', { name: 'Aplicar filtros' }));
+    expect(JSON.parse(socket.send.mock.calls.at(-1)[0])).toEqual({ tipo: 'suscribir', solicitud: 1, filtros: { canal: 'Telegram' } });
+    act(() => socket.emit(snapshot(5, { total_interacciones: 999 })));
+    expect(screen.queryByText('999')).not.toBeInTheDocument();
+    act(() => socket.emit({ ...snapshot(5, { total_interacciones: 20, por_canal: [{ categoria: 'Telegram', total: 20 }], por_tipo: [{ categoria: 'mensaje', total: 20 }] }), solicitud: 1 }));
+    expect(within(screen.getByRole('heading', { name: 'Interacciones', exact: true }).closest('article')).getByText('20')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Interacciones por canal' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Distribución de tipos de interacción' })).toBeInTheDocument();
+    expect(fetch.mock.calls).toHaveLength(requests);
+    await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
+    expect(JSON.parse(socket.send.mock.calls.at(-1)[0])).toEqual({ tipo: 'suscribir', solicitud: 2, filtros: {} });
+  });
+  it('valida fechas y envía el último instante del día final en UTC', async () => {
+    const socket = await dashboard();
+    act(() => socket.emit(snapshot(0)));
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-11-26' } });
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2026-11-25' } });
+    fireEvent.submit(screen.getByRole('form', { name: 'Filtros de actividad' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('La fecha inicial');
+    expect(socket.send).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2026-11-27' } });
+    fireEvent.submit(screen.getByRole('form', { name: 'Filtros de actividad' }));
+    expect(JSON.parse(socket.send.mock.calls.at(-1)[0]).filtros).toEqual({ inicio: '2026-11-26T00:00:00Z', fin: '2026-11-27T23:59:59.999999Z' });
+  });
+  it('muestra selección vacía sin inventar valores o gráficas', async () => {
+    const socket = await dashboard();
+    act(() => socket.emit(snapshot(0, { total_interacciones: 0, usuarios_participantes: 0, sentimiento_promedio: null, reacciones_recibidas: 0 })));
+    expect(screen.getByText('No encontramos interacciones con estos filtros.')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Distribución de tipos de interacción' })).not.toBeInTheDocument();
+    expect(screen.queryByText('NaN')).not.toBeInTheDocument();
+    expect(screen.queryByText('0.000')).not.toBeInTheDocument();
+  });
+  it('conserva la selección al reconectar y cuando desaparece su categoría', async () => {
+    const socket = await dashboard();
+    act(() => socket.emit(snapshot(0, { opciones_filtros: { tema: ['arte'] } })));
+    await userEvent.selectOptions(screen.getByLabelText('Tema'), 'arte');
+    await userEvent.click(screen.getByRole('button', { name: 'Aplicar filtros' }));
+    act(() => socket.emit({ ...snapshot(0, { total_interacciones: 0, sentimiento_promedio: null, opciones_filtros: { tema: [] } }), solicitud: 1 }));
+    expect(screen.getByLabelText('Tema')).toHaveValue('arte');
+    vi.useFakeTimers();
+    try {
+      await act(async () => { await socket.onclose({ code: 1006 }); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(1400); });
+      const next = TestSocket.connections.at(-1);
+      act(() => { next.readyState = 1; next.onopen(); });
+      expect(JSON.parse(next.send.mock.calls.at(-1)[0])).toEqual({ tipo: 'suscribir', solicitud: 1, filtros: { tema: 'arte' } });
+      act(() => next.emit(snapshot(0, { total_interacciones: 999 })));
+      expect(screen.queryByText('999')).not.toBeInTheDocument();
+      act(() => next.emit({ ...snapshot(0, { total_interacciones: 5 }), solicitud: 1, servidor: 'nuevo' }));
       expect(screen.getByText('En vivo')).toBeInTheDocument();
     } finally { vi.useRealTimers(); }
   });

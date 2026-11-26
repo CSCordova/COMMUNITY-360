@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './api';
 
 export function useRealtime(expire) {
   const [state, setState] = useState({ data: null, status: 'conectando', event: null, warning: '' });
+  const subscription = useRef({ filters: {}, request: 0, socket: null });
+  const applyFilters = useCallback(filters => {
+    const current = subscription.current;
+    current.filters = filters; current.request += 1;
+    setState(previous => ({ ...previous, data: null, event: null, warning: '', status: 'filtrando' }));
+    if (current.socket?.readyState === WebSocket.OPEN) current.socket.send(JSON.stringify({ tipo: 'suscribir', filtros: filters, solicitud: current.request }));
+  }, []);
   useEffect(() => {
     let active = true, socket, reconnect, heartbeat, retryData;
     let attempt = 0, server, revision = -1, lastReceived = 0;
@@ -12,8 +19,10 @@ export function useRealtime(expire) {
       update({ status: attempt ? 'reconectando' : 'conectando' });
       const current = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/dashboard`);
       socket = current;
+      subscription.current.socket = current;
       current.onopen = () => {
         lastReceived = Date.now();
+        if (subscription.current.request) current.send(JSON.stringify({ tipo: 'suscribir', filtros: subscription.current.filters, solicitud: subscription.current.request }));
         heartbeat = setInterval(() => {
           if (Date.now() - lastReceived > 70000) current.close();
           else if (current.readyState === WebSocket.OPEN) current.send(JSON.stringify({ tipo: 'ping' }));
@@ -24,6 +33,12 @@ export function useRealtime(expire) {
         let message;
         try { message = JSON.parse(event.data); } catch { return; }
         lastReceived = Date.now();
+        if (message.tipo === 'pong') return;
+        if ((message.solicitud ?? 0) !== subscription.current.request) return;
+        if (message.tipo === 'error_filtros') {
+          update({ status: 'sincronizando', warning: 'No se pudieron aplicar los filtros. Revisa las fechas y vuelve a intentarlo.' });
+          return;
+        }
         if (message.tipo === 'error_datos') {
           update({ status: 'sincronizando', warning: 'No se pudo actualizar la actividad. Conservamos la última lectura mientras reintentamos.' });
           clearTimeout(retryData);
@@ -36,7 +51,7 @@ export function useRealtime(expire) {
         if (server === message.servidor && message.revision < revision) return;
         server = message.servidor; revision = message.revision; attempt = 0;
         clearTimeout(retryData);
-        update({ data: message.indicadores, status: 'conectado', warning: '',
+        update({ data: message.indicadores, options: message.indicadores.opciones_filtros || {}, status: 'conectado', warning: '',
           event: { operation: message.operacion, id: message.id_interaccion, date: message.fecha } });
       };
       current.onerror = () => { /* onclose comprueba la sesión y reintenta. */ };
@@ -57,7 +72,8 @@ export function useRealtime(expire) {
       active = false;
       clearTimeout(reconnect); clearTimeout(retryData); clearInterval(heartbeat);
       if (socket) { socket.onclose = null; socket.onmessage = null; socket.onopen = null; socket.onerror = null; socket.close(); }
+      subscription.current.socket = null;
     };
   }, [expire]);
-  return state;
+  return { ...state, applyFilters };
 }

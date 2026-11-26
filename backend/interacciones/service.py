@@ -52,14 +52,20 @@ class InteraccionesService:
     def consultar(self, filtros):
         registros = self.interacciones.listar()
         permisos = self.usuarios.consentimientos([r.datos.get("id_usuario") for r in registros])
+        datos = [self._lectura(registro, permisos) for registro in registros]
+        return self.filtrar(datos, filtros)
+
+    @staticmethod
+    def filtrar(datos, filtros):
         resultado = []
-        for registro in registros:
-            dato = self._lectura(registro, permisos)
+        for dato in datos:
             if filtros.id_usuario and dato["id_usuario"] != filtros.id_usuario:
                 continue
             if filtros.tipo and dato["tipo"] != filtros.tipo:
                 continue
             if filtros.canal and dato["canal"] != filtros.canal:
+                continue
+            if filtros.tema and dato["tema"] != filtros.tema:
                 continue
             if filtros.inicio and dato["timestamp"] < filtros.inicio:
                 continue
@@ -105,7 +111,12 @@ class InteraccionesService:
         self.interacciones.eliminar(identificador, registro.version)
 
     def resumen(self, filtros):
-        datos = self.consultar(filtros)
+        from backend.interacciones.schemas import FiltrosInteracciones
+        return self.resumen_de_datos(self.consultar(FiltrosInteracciones()), filtros)
+
+    @staticmethod
+    def resumen_de_datos(todos, filtros):
+        datos = InteraccionesService.filtrar(todos, filtros)
         total = len(datos)
         def categorias(campo):
             conteo = Counter(d[campo] for d in datos)
@@ -114,6 +125,10 @@ class InteraccionesService:
         horas = Counter((d["timestamp"].weekday(), d["timestamp"].hour) for d in datos)
         return {
             "fuente": "interacciones_actuales_firestore", "zona_horaria": "UTC",
+            "filtros": filtros.model_dump(mode="json", exclude_none=True),
+            "opciones_filtros": {campo: sorted({d[campo] for d in todos}) for campo in ("canal", "tipo", "tema")},
+            "rango_datos": {"inicio": min(d["timestamp"] for d in todos).isoformat() if todos else None,
+                            "fin": max(d["timestamp"] for d in todos).isoformat() if todos else None},
             "total_interacciones": total,
             "usuarios_participantes": len({d["id_usuario"] for d in datos}),
             "sentimiento_promedio": sum(d["sentimiento"] for d in datos) / total if total else None,

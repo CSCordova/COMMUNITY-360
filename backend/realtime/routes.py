@@ -3,6 +3,7 @@ import json
 import time
 from urllib.parse import urlsplit
 import anyio
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, WebSocketException
 
@@ -10,11 +11,19 @@ from backend.auth.dependencies import autenticar_token
 from backend.core.config import COOKIE_NAME
 from backend.interacciones.routes import obtener_servicio
 from backend.interacciones.service import InteraccionesService
+from backend.interacciones.schemas import FiltrosInteracciones
 from backend.realtime.hub import DashboardHub, obtener_hub
 from turso_http import TursoHTTPError
 
 router = APIRouter()
 INTERVALO_VALIDACION = 30
+
+
+class Suscripcion(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    tipo: str
+    solicitud: int = Field(strict=True, ge=1, le=2**31-1)
+    filtros: FiltrosInteracciones
 
 
 def token_y_origen(websocket):
@@ -101,6 +110,15 @@ async def dashboard_websocket(websocket: WebSocket,
                 hub.encolar(cliente, {"tipo": "pong"})
             elif mensaje.get("tipo") == "solicitar_estado":
                 await hub.estado_inicial(cliente, servicio)
+            elif mensaje.get("tipo") == "suscribir":
+                try:
+                    peticion = Suscripcion.model_validate(mensaje)
+                except ValidationError:
+                    hub.encolar(cliente, {"tipo": "error_filtros", "solicitud": mensaje.get("solicitud")
+                        if type(mensaje.get("solicitud")) is int else None,
+                        "mensaje": "Revisa los filtros y el orden de las fechas."})
+                    continue
+                await hub.estado_inicial(cliente, servicio, peticion.filtros, peticion.solicitud)
             else:
                 # No se permiten operaciones de escritura por WebSocket.
                 hub.cerrar(cliente, 1008)

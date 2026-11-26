@@ -109,6 +109,7 @@ class FiltrosInteracciones(BaseModel):
     id_usuario: IdUsuario | None = None
     tipo: Tipo | None = None
     canal: TextoCorto | None = None
+    tema: TextoCorto | None = None
     inicio: AwareDatetime | None = None
     fin: AwareDatetime | None = None
 

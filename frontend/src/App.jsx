@@ -102,8 +102,8 @@ function Dashboard() {
     try { await signOut(); } catch (e) { setError(`No se pudo cerrar la sesión. ${e.message}`); }
     finally { setBusy(false); }
   }
-  return <div className="dashboard-layout"><header className="dashboard-header"><Brand/><div className="account-menu"><span><Icon name="user"/>{user.usuario}</span><button className="secondary-button" onClick={logout} disabled={busy}><Icon name="logout"/>{busy ? 'Cerrando…' : 'Cerrar sesión'}</button></div></header>
-    <main className="dashboard-main"><p className="eyebrow">TU ESPACIO DE TRABAJO</p><h1>Hola, {user.usuario}.</h1><p className="dashboard-description">Bienvenido a COMMUNITY 360.</p>
+  return <div className="dashboard-layout"><header className="dashboard-header"><Brand/><nav className="dashboard-nav" aria-label="Secciones del dashboard"><a href="#actividad">Actividad</a><a href="#distribucion">Visualizaciones</a><a href="#historico">Histórico</a></nav><div className="account-menu"><span><Icon name="user"/>{user.usuario}</span><button className="secondary-button" onClick={logout} disabled={busy}><Icon name="logout"/>{busy ? 'Cerrando…' : 'Cerrar sesión'}</button></div></header>
+    <main className="dashboard-main"><div className="dashboard-hero"><div><p className="eyebrow">PERSPECTIVAS QUE NOS CONECTAN</p><h1>Hola, {user.usuario}.</h1><p className="dashboard-description">Tu comunidad, desde una perspectiva más completa.</p></div><div className="hero-note"><Icon name="chart" width="26" height="26"/><div><strong>Conocer para conectar</strong><span>Personas, conversaciones y nuevas oportunidades.</span></div></div></div>
       {error && <div className="dashboard-error"><p role="alert">{error}</p><button className="secondary-button" onClick={() => setAttempt(attempt + 1)}>Reintentar consulta</button></div>}
       <ActivityPanel expire={expire} history={data}/>
       <span className="session-note"><Icon name="shield"/>Sesión verificada</span>

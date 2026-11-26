@@ -135,7 +135,7 @@ class PruebasFase5(unittest.TestCase):
     def test_09_fallo_de_resumen_no_invalida_escritura_confirmada(self):
         with self.conectar() as ws:
             ws.receive_json()
-            with patch.object(InteraccionesService, 'resumen', side_effect=DataServiceError('falla controlada')):
+            with patch.object(InteraccionesService, 'consultar', side_effect=DataServiceError('falla controlada')):
                 response = self.client.post('/api/interacciones', json=fase4.ejemplo())
                 self.assertEqual(response.status_code, 201)
                 self.assertEqual(ws.receive_json()['tipo'], 'error_datos')
