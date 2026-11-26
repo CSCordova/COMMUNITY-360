@@ -36,6 +36,7 @@ export default function TerritoryPanel({ active, revision }) {
       library.current = L;
       map.current = L.map(container.current, { minZoom: 2, maxZoom: 12, maxBounds: worldBounds, maxBoundsViscosity: 1,
         worldCopyJump: false, scrollWheelZoom: true, dragging: true, touchZoom: true,
+        wheelPxPerZoomLevel: 480, wheelDebounceTime: 100, zoomSnap: .25, zoomDelta: .5,
         zoomControl: false, zoomAnimation: !reduce, fadeAnimation: !reduce }).setView([24, -100], 4);
       map.current.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
       L.control.zoom({ position: 'bottomleft', zoomInTitle: 'Acercar mapa', zoomOutTitle: 'Alejar mapa' }).addTo(map.current);
