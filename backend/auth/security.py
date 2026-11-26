@@ -21,8 +21,8 @@ def verificar_password(password: str, hash_guardado: str) -> bool:
 
 
 def validar_password_nueva(password: str) -> None:
-    if not 8 <= len(password) <= 12:
-        raise ValueError("La nueva contraseña debe tener entre 8 y 12 caracteres.")
+    if not 8 <= len(password) <= 14:
+        raise ValueError("La nueva contraseña debe tener entre 8 y 14 caracteres.")
 
 
 def crear_token(id_cuenta: int, token_version: int) -> str:

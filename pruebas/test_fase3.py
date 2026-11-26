@@ -116,7 +116,7 @@ class PruebasFase3(unittest.IsolatedAsyncioTestCase):
         r = await self.client.get("/api/dashboard")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["cuenta"]["usuario"], "cuenta_test")
-        self.assertFalse(r.json()["analitica_disponible"])
+        self.assertTrue(r.json()["analitica_disponible"])
 
     async def test_10_cambio_password_revoca_sesion_y_password_anterior(self):
         token = (await self.login()).json()["access_token"]
@@ -127,10 +127,10 @@ class PruebasFase3(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.login(password=NUEVA)).status_code, 200)
 
     async def test_11_cambio_invalido_no_modifica_cuenta(self):
-        for longitud in (8, 12):
+        for longitud in (8, 12, 13, 14):
             with self.subTest(longitud_aceptada=longitud):
                 security.validar_password_nueva("x" * longitud)
-        for actual, nueva in (("incorrecta", NUEVA), (PASSWORD, "x" * 7), (PASSWORD, "x" * 13), (PASSWORD, PASSWORD)):
+        for actual, nueva in (("incorrecta", NUEVA), (PASSWORD, "x" * 7), (PASSWORD, "x" * 15), (PASSWORD, PASSWORD)):
             with self.subTest(nueva=nueva):
                 with self.assertRaises(ValueError):
                     cambiar_password(self.db, "cuenta_test", actual, nueva)

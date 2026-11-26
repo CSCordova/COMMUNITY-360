@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, Response
 from pydantic import BaseModel, Field, SecretStr, field_validator
 from backend.auth.accounts import buscar_cuenta
 from backend.auth.dependencies import error_credenciales, obtener_cuenta, validar_origen
 from backend.auth.security import crear_token, generar_hash, verificar_password
 from backend.core.config import COOKIE_NAME, COOKIE_SECURE, TOKEN_MINUTES
 from backend.database.turso import conectar_turso
+from backend.realtime.hub import DashboardHub, obtener_hub
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 HASH_FICTICIO = generar_hash("cuenta-inexistente-solo-comparacion")
@@ -39,9 +40,11 @@ def mi_cuenta(cuenta: dict = Depends(obtener_cuenta)):
 
 
 @router.post("/logout", dependencies=[Depends(validar_origen)])
-def logout(response: Response, cuenta: dict = Depends(obtener_cuenta)):
+def logout(response: Response, tareas: BackgroundTasks, cuenta: dict = Depends(obtener_cuenta),
+           hub: DashboardHub = Depends(obtener_hub)):
     with conectar_turso() as db:
         db.execute("UPDATE cuentas_acceso SET token_version = token_version + 1 WHERE id_cuenta = ?",
                    (cuenta["id_cuenta"],))
+    tareas.add_task(hub.cerrar_cuenta, cuenta["id_cuenta"])
     response.delete_cookie(COOKIE_NAME, path="/", httponly=True, secure=COOKIE_SECURE, samesite="strict")
     return {"mensaje": "Sesiones de la cuenta cerradas correctamente."}

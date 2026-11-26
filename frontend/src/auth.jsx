@@ -34,7 +34,8 @@ export function AuthProvider({ children }) {
     catch (e) { if (e.status !== 401) throw e; }
     setUser(null); setError('');
   }
-  return <AuthContext.Provider value={{ user, loading, error, refresh, signIn, signOut, expire: () => setUser(null) }}>{children}</AuthContext.Provider>;
+  const expire = useCallback(() => setUser(null), []);
+  return <AuthContext.Provider value={{ user, loading, error, refresh, signIn, signOut, expire }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

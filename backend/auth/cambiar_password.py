@@ -9,7 +9,7 @@ def main():
     print("Esta operación modifica únicamente la cuenta indicada en Turso.")
     usuario = input("Usuario de la cuenta: ").strip()
     actual = leer_secreto("Contraseña actual (oculta): ")
-    nueva = leer_secreto("Nueva contraseña, de 8 a 12 caracteres (oculta): ")
+    nueva = leer_secreto("Nueva contraseña, de 8 a 14 caracteres (oculta): ")
     if nueva != leer_secreto("Confirmar nueva contraseña (oculta): "):
         raise ValueError("Las contraseñas nuevas no coinciden.")
     with conectar_turso() as db:

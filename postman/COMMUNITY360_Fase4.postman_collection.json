@@ -1,445 +1,2558 @@
 {
   "info": {
-    "name": "COMMUNITY 360 Fase 4",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "name": "COMMUNITY 360 Fase 4 - Pruebas completas",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Recorrido ordenado de la API desplegada. Completa solo c360_password en su valor local y ejecuta las carpetas en orden. Incluye payloads válidos y rechazos intencionales. Las escrituras usan IDs propios I9xxxxxx y la limpieza solo se habilita tras un alta HTTP 201. Las pruebas se entregan pendientes de ejecutar contra Render."
   },
   "auth": {
     "type": "bearer",
     "bearer": [
       {
         "key": "token",
-        "value": "{{access_token}}",
+        "value": "{{c360_access_token}}",
         "type": "string"
       }
     ]
   },
+  "protocolProfileBehavior": {
+    "disableCookies": true
+  },
   "variable": [
     {
-      "key": "base_url",
-      "value": "http://127.0.0.1:8000"
+      "key": "c360_base_url",
+      "value": "https://community-360-sbze.onrender.com",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
     },
     {
-      "key": "usuario",
-      "value": "isaidemo"
+      "key": "c360_usuario",
+      "value": "isaidemo",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
     },
     {
-      "key": "password",
-      "value": ""
+      "key": "c360_password",
+      "value": "",
+      "type": "string",
+      "description": "Privado: introducir solo como valor local; no compartir ni exportar con su valor real."
     },
     {
-      "key": "access_token",
-      "value": ""
+      "key": "c360_access_token",
+      "value": "",
+      "type": "string",
+      "description": "Privado: introducir solo como valor local; no compartir ni exportar con su valor real."
     },
     {
-      "key": "id_usuario",
-      "value": ""
+      "key": "c360_desplazamiento_usuarios",
+      "value": "0",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
     },
     {
-      "key": "id_interaccion_prueba",
-      "value": ""
+      "key": "c360_usuario_si",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
     },
     {
-      "key": "version_interaccion",
-      "value": ""
+      "key": "c360_usuario_no",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_id_prueba",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_id_privacidad",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_version",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_version_anterior",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_creada_prueba",
+      "value": "no",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_creada_privacidad",
+      "value": "no",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_timestamp",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_ejecucion",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_pais",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_estado",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_ciudad",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_base_usuarios",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_base_interacciones",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
+    },
+    {
+      "key": "c360_usuario_inexistente_verificado",
+      "value": "",
+      "type": "string",
+      "description": "Administrado por la colección salvo base_url, usuario y desplazamiento."
     }
   ],
   "item": [
     {
-      "name": "01 Comprobar servidor",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{base_url}}/health",
-        "auth": {
-          "type": "noauth"
-        }
-      },
-      "event": [
+      "name": "01 Acceso y preparación",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "02 Iniciar sesión",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/auth/login",
-        "auth": {
-          "type": "noauth"
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"usuario\": \"{{usuario}}\",\n  \"password\": \"{{password}}\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "name": "T01 Servidor activo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/health",
+            "description": "Esperado: HTTP 200. Sin body ni credenciales.",
+            "auth": {
+              "type": "noauth"
             }
-          }
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "if (pm.response.code === 200) { pm.collectionVariables.set('access_token', pm.response.json().access_token); }"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "03 Listar usuarios y elegir un ID válido",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{base_url}}/api/usuarios?limite=5"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "if (pm.response.code === 200 && pm.response.json().items.length) { pm.collectionVariables.set('id_usuario', pm.response.json().items[0].id_usuario); }"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "04 Consultar usuario elegido",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{base_url}}/api/usuarios/{{id_usuario}}"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "05 Analítica histórica del padrón",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{base_url}}/api/analitica/usuarios"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "06 Listar interacciones actuales",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{base_url}}/api/interacciones?limite=10"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "07 Analítica de interacciones",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{base_url}}/api/analitica/interacciones"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "08 Crear una interacción de demostración",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/api/interacciones",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"id_interaccion\": \"{{id_nuevo}}\",\n  \"id_usuario\": \"{{id_usuario}}\",\n  \"timestamp\": \"{{timestamp_actual}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Interacción de demostración enviada desde Postman.\",\n  \"tema\": \"demostracion\",\n  \"sentimiento\": 0.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 0,\n  \"etiquetas\": [\n    \"demostracion\"\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });"
-            ]
-          }
-        },
-        {
-          "listen": "prerequest",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.collectionVariables.unset('id_interaccion_prueba');",
-              "pm.collectionVariables.unset('version_interaccion');",
-              "pm.variables.set('id_nuevo', 'I9' + String(Math.floor(Math.random() * 1000000)).padStart(6, '0'));",
-              "pm.variables.set('timestamp_actual', new Date().toISOString());"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "if (pm.response.code === 201) { pm.collectionVariables.set('id_interaccion_prueba', pm.response.json().id_interaccion); pm.collectionVariables.set('version_interaccion', pm.response.headers.get('ETag')); }"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "09 Consultar la interacción creada",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{base_url}}/api/interacciones/{{id_interaccion_prueba}}"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "if (pm.response.code === 200) { pm.collectionVariables.set('version_interaccion', pm.response.headers.get('ETag')); }"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "10 Modificar la interacción creada",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
           },
-          {
-            "key": "If-Match",
-            "value": "{{version_interaccion}}"
-          }
-        ],
-        "url": "{{base_url}}/api/interacciones/{{id_interaccion_prueba}}",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"texto\": \"Interacción modificada desde Postman.\",\n  \"sentimiento\": -0.25,\n  \"reacciones_recibidas\": 3\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T01 Servidor activo: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "pm.test('Servidor activo', () => pm.expect(pm.response.json().estado).to.eql('activo'));",
+                  "}"
+                ]
+              }
             }
-          }
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
+          ]
         },
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "if (pm.response.code === 200) { pm.collectionVariables.set('version_interaccion', pm.response.headers.get('ETag')); }"
-            ]
-          }
+          "name": "T02 Ruta privada sin sesión",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/usuarios",
+            "description": "Esperado: HTTP 401. Cookie jar deshabilitado para que una cookie previa no falsee la prueba.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T02 Ruta privada sin sesión: HTTP 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 401) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T03 Login incorrecto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/auth/login",
+            "description": "Esperado: HTTP 401. Credenciales ficticias de rechazo; no reemplazar por contraseñas reales.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"fase4_noexiste\",\n  \"password\": \"Incorrecta1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T03 Login incorrecto: HTTP 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 401) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T04 Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/auth/login",
+            "description": "Esperado: HTTP 200. Guarda automáticamente el token para las solicitudes siguientes. Oculta el body del login en capturas.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"{{c360_usuario}}\",\n  \"password\": \"{{c360_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_password')), 'Completa c360_password con el valor LOCAL en Postman.');",
+                  "cv.unset('c360_access_token');",
+                  "// Serialización correcta aunque la contraseña tenga comillas o barras.",
+                  "pm.request.body.update(JSON.stringify({usuario:cv.get('c360_usuario'),password:cv.get('c360_password')}));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T04 Login: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d = pm.response.json();",
+                  "pm.test('JWT y duración', () => { pm.expect(d.access_token).to.be.a('string').and.not.empty; pm.expect(d.expires_in).to.eql(1800); });",
+                  "cv.set('c360_access_token', d.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T05 Cuenta autenticada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/auth/me",
+            "description": "Esperado: HTTP 200."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T05 Cuenta autenticada: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "pm.test('Cuenta correcta',()=>pm.expect(pm.response.json().usuario.toLowerCase()).to.eql(cv.get('c360_usuario').toLowerCase()));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T06 Acceso al dashboard protegido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/dashboard",
+            "description": "Esperado: HTTP 200. El dashboard todavía no integra gráficas ni WebSockets."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T06 Acceso al dashboard protegido: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "pm.test('Cuenta en dashboard',()=>pm.expect(pm.response.json().cuenta.usuario).to.be.a('string'));",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "11 Volver a consultar la analítica",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{base_url}}/api/analitica/interacciones"
-      },
-      "event": [
+      "name": "02 Lecturas reales y línea base",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
+          "name": "T07 Usuarios de Turso y elección de IDs reales",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/usuarios?limite=100&desplazamiento={{c360_desplazamiento_usuarios}}",
+            "description": "Esperado: HTTP 200. Si no encuentra ambos casos, cambia c360_desplazamiento_usuarios a 100, 200, etc. y repite T07."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T07 Usuarios de Turso y elección de IDs reales: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d = pm.response.json();",
+                  "pm.test('Lista paginada',()=>{ pm.expect(d.total).to.be.a('number'); pm.expect(d.items).to.be.an('array'); pm.expect(d.items.length).to.be.at.most(100); });",
+                  "const si=d.items.find(u=>u.consentimiento_datos==='si' && u.ubicacion);",
+                  "const no=d.items.find(u=>u.consentimiento_datos==='no');",
+                  "if(si){ cv.set('c360_usuario_si',si.id_usuario); cv.set('c360_pais',si.ubicacion.pais); cv.set('c360_estado',si.ubicacion.estado); cv.set('c360_ciudad',si.ubicacion.ciudad); }",
+                  "if(no){cv.set('c360_usuario_no',no.id_usuario);}",
+                  "pm.test('Usuario autorizado localizado',()=>pm.expect(Boolean(cv.get('c360_usuario_si'))).to.eql(true));",
+                  "pm.test('Usuario sin consentimiento localizado',()=>pm.expect(Boolean(cv.get('c360_usuario_no'))).to.eql(true));",
+                  "pm.test('Sin geografía no autorizada en el listado',()=>d.items.filter(u=>u.consentimiento_datos==='no').forEach(u=>pm.expect(u).not.to.have.property('ubicacion')));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T08 Usuario con ubicación autorizada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/usuarios/{{c360_usuario_si}}",
+            "description": "Esperado: HTTP 200."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(Boolean(cv.get('c360_usuario_si')),'Ejecuta T07.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T08 Usuario con ubicación autorizada: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "pm.test('Ubicación autorizada',()=>{const d=pm.response.json();pm.expect(d.consentimiento_datos).to.eql('si');pm.expect(d.ubicacion.ciudad).to.be.a('string');});",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T09 Usuario sin ubicación autorizada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/usuarios/{{c360_usuario_no}}",
+            "description": "Esperado: HTTP 200."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(Boolean(cv.get('c360_usuario_no')),'Ejecuta T07.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T09 Usuario sin ubicación autorizada: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "pm.test('Sin geografía',()=>{const d=pm.response.json();pm.expect(d.consentimiento_datos).to.eql('no');pm.expect(d).not.to.have.property('ubicacion');});",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T10 Padrón histórico de referencia",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/analitica/usuarios",
+            "description": "Esperado: HTTP 200. Conserva la línea base de los indicadores históricos del padrón."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T10 Padrón histórico de referencia: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "cv.set('c360_base_usuarios',JSON.stringify(pm.response.json())); pm.test('Fuente SQL',()=>pm.expect(pm.response.json().fuente).to.eql('padron_historico_turso'));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T11 Interacciones iniciales de referencia",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/analitica/interacciones",
+            "description": "Esperado: HTTP 200. Registra el total real existente antes de escribir. En la carga inicial se esperaban 207; no se fuerza esa cantidad."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') !== 'si' && cv.get('c360_creada_privacidad') !== 'si', 'Limpia primero las interacciones de la ejecución anterior.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T11 Interacciones iniciales de referencia: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d=pm.response.json();",
+                  "pm.test('Fuente Firestore',()=>pm.expect(d.fuente).to.eql('interacciones_actuales_firestore'));",
+                  "cv.set('c360_base_interacciones',JSON.stringify({total:d.total_interacciones,reacciones:d.reacciones_recibidas,suma_sentimientos:(d.sentimiento_promedio||0)*d.total_interacciones}));",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "12 Eliminar solo la interacción creada",
-      "request": {
-        "method": "DELETE",
-        "header": [
-          {
-            "key": "If-Match",
-            "value": "{{version_interaccion}}"
-          }
-        ],
-        "url": "{{base_url}}/api/interacciones/{{id_interaccion_prueba}}"
-      },
-      "event": [
+      "name": "03 Alta, filtros y duplicados",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
-            ]
-          }
+          "name": "T12 Crear interacción propia con ubicación autorizada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 201. Escribe SOLO un documento de demostración. ID I9xxxxxx generado al enviar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_prueba}}\",\n  \"id_usuario\": \"{{c360_usuario_si}}\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Prueba controlada de la Fase 4.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 2,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"{{c360_pais}}\",\n    \"estado\": \"{{c360_estado}}\",\n    \"ciudad\": \"{{c360_ciudad}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(Boolean(cv.get('c360_base_interacciones')),'Ejecuta T11.');",
+                  "exigir(cv.get('c360_creada_prueba') !== 'si', 'Hay una interacción propia pendiente: ejecuta la limpieza antes de repetir el alta.');",
+                  "exigir(Boolean(cv.get('c360_usuario_si')), 'T07 debe localizar usuarios con y sin consentimiento.');",
+                  "let nuevo;",
+                  "do { nuevo = 'I9' + String(Math.floor(Math.random()*1000000)).padStart(6,'0'); } while (nuevo === cv.get('c360_id_privacidad'));",
+                  "cv.set('c360_id_prueba', nuevo);",
+                  "cv.set('c360_timestamp', new Date().toISOString());",
+                  "cv.set('c360_ejecucion', 'fase4_' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T12 Crear interacción propia con ubicación autorizada: HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 201) {",
+                  "const d=pm.response.json();",
+                  "cv.set('c360_id_prueba',d.id_interaccion);cv.set('c360_creada_prueba','si');",
+                  "pm.test('ID y ubicación correctos',()=>{pm.expect(d.id_usuario).to.eql(cv.get('c360_usuario_si'));pm.expect(d.ubicacion.ciudad).to.eql(cv.get('c360_ciudad'));});",
+                  "pm.test('Longitud calculada por el servidor',()=>pm.expect(d.longitud_texto).to.eql(d.texto.length));",
+                  "cv.set('c360_version', pm.response.headers.get('ETag'));",
+                  "pm.test('ETag disponible', () => pm.expect(cv.get('c360_version')).to.be.a('string').and.not.empty);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T13 Consultar interacción creada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_prueba}}",
+            "description": "Esperado: HTTP 200."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T13 Consultar interacción creada: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "pm.test('Interacción propia',()=>pm.expect(pm.response.json().id_interaccion).to.eql(cv.get('c360_id_prueba')));",
+                  "cv.set('c360_version', pm.response.headers.get('ETag'));",
+                  "pm.test('ETag disponible', () => pm.expect(cv.get('c360_version')).to.be.a('string').and.not.empty);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T14 Filtrar y paginar interacciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/interacciones?id_usuario={{c360_usuario_si}}&tipo=mensaje&canal=Telegram&limite=100&desplazamiento=0",
+            "description": "Esperado: HTTP 200."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T14 Filtrar y paginar interacciones: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d=pm.response.json();",
+                  "pm.test('Filtros aplicados',()=>d.items.forEach(x=>{pm.expect(x.id_usuario).to.eql(cv.get('c360_usuario_si'));pm.expect(x.tipo).to.eql('mensaje');pm.expect(x.canal).to.eql('Telegram');}));",
+                  "pm.test('Alta presente en listado',()=>pm.expect(d.items.some(x=>x.id_interaccion===cv.get('c360_id_prueba'))).to.eql(true));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T15 Analítica después del alta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/analitica/interacciones",
+            "description": "Esperado: HTTP 200. Sin otros escritores concurrentes, el total debe ser línea base +1. No se fija el total a 207."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T15 Analítica después del alta: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d = pm.response.json();",
+                  "const base = JSON.parse(cv.get('c360_base_interacciones'));",
+                  "pm.test('Total respecto a la línea base', () => pm.expect(d.total_interacciones).to.eql(base.total + (1)));",
+                  "pm.test('Reacciones respecto a la línea base', () => pm.expect(d.reacciones_recibidas).to.eql(base.reacciones + (2)));",
+                  "const esperado = d.total_interacciones ? (base.suma_sentimientos + (0.5))/d.total_interacciones : null;",
+                  "pm.test('Promedio de sentimiento recalculado', () => esperado === null ? pm.expect(d.sentimiento_promedio).to.eql(null) : pm.expect(d.sentimiento_promedio).to.be.closeTo(esperado, 1e-9));",
+                  "pm.test('Mapa de calor consistente', () => pm.expect(d.actividad_semanal.reduce((s,x)=>s+x.total,0)).to.eql(d.total_interacciones));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T16 Rechazar ID duplicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 409. Reenvía el mismo ID; debe rechazarlo sin sobrescribir el documento.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_prueba}}\",\n  \"id_usuario\": \"{{c360_usuario_si}}\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Prueba controlada de la Fase 4.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 2,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"{{c360_pais}}\",\n    \"estado\": \"{{c360_estado}}\",\n    \"ciudad\": \"{{c360_ciudad}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T16 Rechazar ID duplicado: HTTP 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 409) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T17 Confirmar que el duplicado no alteró el registro",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_prueba}}",
+            "description": "Esperado: HTTP 200."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T17 Confirmar que el duplicado no alteró el registro: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "pm.test('Texto original intacto',()=>pm.expect(pm.response.json().texto).to.eql('Prueba controlada de la Fase 4.'));",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "13 Confirmar que fue eliminada",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{base_url}}/api/interacciones/{{id_interaccion_prueba}}"
-      },
-      "event": [
+      "name": "04 Privacidad en la escritura",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });"
-            ]
-          }
+          "name": "T18 Crear prueba para usuario sin consentimiento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 201. La ubicación enviada es ficticia y debe ser excluida. Comprueba también el documento en Firestore antes de borrarlo si necesitas acreditar la persistencia sin geografía.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_privacidad}}\",\n  \"id_usuario\": \"{{c360_usuario_no}}\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Prueba controlada de la Fase 4.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.0,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 0,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"PAIS_DE_PRUEBA\",\n    \"estado\": \"ESTADO_DE_PRUEBA\",\n    \"ciudad\": \"CIUDAD_DE_PRUEBA\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');",
+                  "exigir(cv.get('c360_creada_privacidad') !== 'si', 'Hay una interacción propia pendiente: ejecuta la limpieza antes de repetir el alta.');",
+                  "exigir(Boolean(cv.get('c360_usuario_no')), 'T07 debe localizar usuarios con y sin consentimiento.');",
+                  "let nuevo;",
+                  "do { nuevo = 'I9' + String(Math.floor(Math.random()*1000000)).padStart(6,'0'); } while (nuevo === cv.get('c360_id_prueba'));",
+                  "cv.set('c360_id_privacidad', nuevo);",
+                  "cv.set('c360_timestamp', new Date().toISOString());",
+                  "cv.set('c360_ejecucion', 'fase4_' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T18 Crear prueba para usuario sin consentimiento: HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 201) {",
+                  "const d=pm.response.json();cv.set('c360_id_privacidad',d.id_interaccion);cv.set('c360_creada_privacidad','si');",
+                  "pm.test('No devuelve ubicación no autorizada',()=>pm.expect(d).not.to.have.property('ubicacion'));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T19 Leer prueba sin consentimiento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_privacidad}}",
+            "description": "Esperado: HTTP 200."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_privacidad') === 'si', 'Falta la interacción de privacidad. Ejecuta primero T18.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T19 Leer prueba sin consentimiento: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "pm.test('Sin ubicación al consultar',()=>pm.expect(pm.response.json()).not.to.have.property('ubicacion'));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T20 Analítica después de las dos altas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/analitica/interacciones",
+            "description": "Esperado: HTTP 200. Sin otros escritores concurrentes, el total debe ser línea base +2. No se fija el total a 207."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');",
+                  "exigir(cv.get('c360_creada_privacidad') === 'si', 'Falta la interacción de privacidad. Ejecuta primero T18.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T20 Analítica después de las dos altas: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d = pm.response.json();",
+                  "const base = JSON.parse(cv.get('c360_base_interacciones'));",
+                  "pm.test('Total respecto a la línea base', () => pm.expect(d.total_interacciones).to.eql(base.total + (2)));",
+                  "pm.test('Reacciones respecto a la línea base', () => pm.expect(d.reacciones_recibidas).to.eql(base.reacciones + (2)));",
+                  "const esperado = d.total_interacciones ? (base.suma_sentimientos + (0.5))/d.total_interacciones : null;",
+                  "pm.test('Promedio de sentimiento recalculado', () => esperado === null ? pm.expect(d.sentimiento_promedio).to.eql(null) : pm.expect(d.sentimiento_promedio).to.be.closeTo(esperado, 1e-9));",
+                  "pm.test('Mapa de calor consistente', () => pm.expect(d.actividad_semanal.reduce((s,x)=>s+x.total,0)).to.eql(d.total_interacciones));",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "14 Cerrar todas las sesiones de la cuenta",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": "{{base_url}}/auth/logout"
-      },
-      "event": [
+      "name": "05 Validaciones y rechazos esperados",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-            ]
-          }
+          "name": "T21 Verificar usuario inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/usuarios/U999999",
+            "description": "Esperado: HTTP 404."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "cv.unset('c360_usuario_inexistente_verificado');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T21 Verificar usuario inexistente: HTTP 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 404) {",
+                  "cv.set('c360_usuario_inexistente_verificado','si');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T22 Rechazar referencia a usuario inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 422. Se reutiliza un ID propio existente; incluso si fallase la validación referencial, no se crea un documento ajeno.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_prueba}}\",\n  \"id_usuario\": \"U999999\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Prueba controlada de la Fase 4.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 2,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"{{c360_pais}}\",\n    \"estado\": \"{{c360_estado}}\",\n    \"ciudad\": \"{{c360_ciudad}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');",
+                  "exigir(cv.get('c360_usuario_inexistente_verificado')==='si','Ejecuta T21 y confirma HTTP 404.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T22 Rechazar referencia a usuario inexistente: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T23 Rechazar sentimiento fuera de rango",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_prueba}}\",\n  \"id_usuario\": \"{{c360_usuario_si}}\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Prueba controlada de la Fase 4.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 1.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 2,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"{{c360_pais}}\",\n    \"estado\": \"{{c360_estado}}\",\n    \"ciudad\": \"{{c360_ciudad}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T23 Rechazar sentimiento fuera de rango: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T24 Rechazar contador negativo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_prueba}}\",\n  \"id_usuario\": \"{{c360_usuario_si}}\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Prueba controlada de la Fase 4.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": -1,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"{{c360_pais}}\",\n    \"estado\": \"{{c360_estado}}\",\n    \"ciudad\": \"{{c360_ciudad}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T24 Rechazar contador negativo: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T25 Rechazar booleano como contador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_prueba}}\",\n  \"id_usuario\": \"{{c360_usuario_si}}\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Prueba controlada de la Fase 4.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": true,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"{{c360_pais}}\",\n    \"estado\": \"{{c360_estado}}\",\n    \"ciudad\": \"{{c360_ciudad}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T25 Rechazar booleano como contador: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T26 Rechazar fecha sin zona horaria",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_prueba}}\",\n  \"id_usuario\": \"{{c360_usuario_si}}\",\n  \"timestamp\": \"2026-11-25T12:00:00\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Prueba controlada de la Fase 4.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 2,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"{{c360_pais}}\",\n    \"estado\": \"{{c360_estado}}\",\n    \"ciudad\": \"{{c360_ciudad}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T26 Rechazar fecha sin zona horaria: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T27 Rechazar longitud de texto incorrecta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_prueba}}\",\n  \"id_usuario\": \"{{c360_usuario_si}}\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Prueba controlada de la Fase 4.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 2,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"{{c360_pais}}\",\n    \"estado\": \"{{c360_estado}}\",\n    \"ciudad\": \"{{c360_ciudad}}\"\n  },\n  \"longitud_texto\": 999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T27 Rechazar longitud de texto incorrecta: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T28 Rechazar texto ausente en mensaje",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_prueba}}\",\n  \"id_usuario\": \"{{c360_usuario_si}}\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": null,\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 2,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"{{c360_pais}}\",\n    \"estado\": \"{{c360_estado}}\",\n    \"ciudad\": \"{{c360_ciudad}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T28 Rechazar texto ausente en mensaje: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T29 Rechazar campo no permitido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_interaccion\": \"{{c360_id_prueba}}\",\n  \"id_usuario\": \"{{c360_usuario_si}}\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Prueba controlada de la Fase 4.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.5,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 2,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": {\n    \"pais\": \"{{c360_pais}}\",\n    \"estado\": \"{{c360_estado}}\",\n    \"ciudad\": \"{{c360_ciudad}}\"\n  },\n  \"campo_no_permitido\": \"prueba\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T29 Rechazar campo no permitido: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T30 Rechazar PATCH vacío",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_prueba}}",
+            "description": "Esperado: HTTP 422.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T30 Rechazar PATCH vacío: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T31 Rechazar identificador mal formado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/interacciones/I1",
+            "description": "Esperado: HTTP 422."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T31 Rechazar identificador mal formado: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T32 Rechazar paginación fuera del límite",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/interacciones?limite=101",
+            "description": "Esperado: HTTP 422."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T32 Rechazar paginación fuera del límite: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T33 Rechazar rango de fechas invertido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/interacciones?inicio=2026-11-26T00:00:00Z&fin=2026-11-25T00:00:00Z",
+            "description": "Esperado: HTTP 422."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T33 Rechazar rango de fechas invertido: HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 422) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T34 Rechazar token inválido aunque exista cookie",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer token_invalido_de_prueba"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones",
+            "description": "Esperado: HTTP 401.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T34 Rechazar token inválido aunque exista cookie: HTTP 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 401) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T35 Rechazar escritura desde origen ajeno",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "https://ajeno.invalid"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_prueba}}",
+            "description": "Esperado: HTTP 403.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tema\": \"no_debe_guardarse\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T35 Rechazar escritura desde origen ajeno: HTTP 403', () => pm.response.to.have.status(403));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 403) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "15 Confirmar JWT revocado",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{base_url}}/auth/me"
-      },
-      "event": [
+      "name": "06 Modificación parcial y reemplazo completo",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 401\", function () { pm.response.to.have.status(401); });"
-            ]
-          }
+          "name": "T36 Modificar con PATCH y versión vigente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "If-Match",
+                "value": "{{c360_version}}"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_prueba}}",
+            "description": "Esperado: HTTP 200.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Texto modificado con PATCH.\",\n  \"sentimiento\": -0.25,\n  \"reacciones_recibidas\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T36 Modificar con PATCH y versión vigente: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d=pm.response.json();",
+                  "pm.test('PATCH aplicado y longitud actualizada',()=>{pm.expect(d.texto).to.eql('Texto modificado con PATCH.');pm.expect(d.longitud_texto).to.eql(d.texto.length);pm.expect(d.sentimiento).to.eql(-0.25);});",
+                  "cv.set('c360_version_anterior', cv.get('c360_version'));",
+                  "cv.set('c360_version', pm.response.headers.get('ETag'));",
+                  "pm.test('ETag disponible', () => pm.expect(cv.get('c360_version')).to.be.a('string').and.not.empty);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T37 Analítica después del PATCH",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/analitica/interacciones",
+            "description": "Esperado: HTTP 200. Sin otros escritores concurrentes, el total debe ser línea base +2. No se fija el total a 207."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');",
+                  "exigir(cv.get('c360_creada_privacidad') === 'si', 'Falta la interacción de privacidad. Ejecuta primero T18.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T37 Analítica después del PATCH: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d = pm.response.json();",
+                  "const base = JSON.parse(cv.get('c360_base_interacciones'));",
+                  "pm.test('Total respecto a la línea base', () => pm.expect(d.total_interacciones).to.eql(base.total + (2)));",
+                  "pm.test('Reacciones respecto a la línea base', () => pm.expect(d.reacciones_recibidas).to.eql(base.reacciones + (5)));",
+                  "const esperado = d.total_interacciones ? (base.suma_sentimientos + (-0.25))/d.total_interacciones : null;",
+                  "pm.test('Promedio de sentimiento recalculado', () => esperado === null ? pm.expect(d.sentimiento_promedio).to.eql(null) : pm.expect(d.sentimiento_promedio).to.be.closeTo(esperado, 1e-9));",
+                  "pm.test('Mapa de calor consistente', () => pm.expect(d.actividad_semanal.reduce((s,x)=>s+x.total,0)).to.eql(d.total_interacciones));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T38 Rechazar modificación con versión anterior",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "If-Match",
+                "value": "{{c360_version_anterior}}"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_prueba}}",
+            "description": "Esperado: HTTP 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tema\": \"no_debe_sobrescribir\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T38 Rechazar modificación con versión anterior: HTTP 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 409) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T39 Reemplazar con PUT completo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "If-Match",
+                "value": "{{c360_version}}"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_prueba}}",
+            "description": "Esperado: HTTP 200. PUT recibe todos los campos obligatorios; el ID solo va en la ruta. ubicacion:null retira la ubicación de esta interacción.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_usuario\": \"{{c360_usuario_si}}\",\n  \"timestamp\": \"{{c360_timestamp}}\",\n  \"canal\": \"Telegram\",\n  \"tipo\": \"mensaje\",\n  \"texto\": \"Registro reemplazado con PUT.\",\n  \"tema\": \"prueba_postman_fase4\",\n  \"sentimiento\": 0.75,\n  \"idioma\": \"es\",\n  \"dispositivo\": \"Web\",\n  \"reacciones_recibidas\": 1,\n  \"etiquetas\": [\n    \"prueba_fase4\",\n    \"{{c360_ejecucion}}\"\n  ],\n  \"ubicacion\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T39 Reemplazar con PUT completo: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d=pm.response.json();",
+                  "pm.test('Reemplazo completo',()=>{pm.expect(d.texto).to.eql('Registro reemplazado con PUT.');pm.expect(d.sentimiento).to.eql(0.75);pm.expect(d.reacciones_recibidas).to.eql(1);pm.expect(d).not.to.have.property('ubicacion');});",
+                  "cv.set('c360_version', pm.response.headers.get('ETag'));",
+                  "pm.test('ETag disponible', () => pm.expect(cv.get('c360_version')).to.be.a('string').and.not.empty);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T40 Analítica después del PUT",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/analitica/interacciones",
+            "description": "Esperado: HTTP 200. Sin otros escritores concurrentes, el total debe ser línea base +2. No se fija el total a 207."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');",
+                  "exigir(cv.get('c360_creada_privacidad') === 'si', 'Falta la interacción de privacidad. Ejecuta primero T18.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T40 Analítica después del PUT: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d = pm.response.json();",
+                  "const base = JSON.parse(cv.get('c360_base_interacciones'));",
+                  "pm.test('Total respecto a la línea base', () => pm.expect(d.total_interacciones).to.eql(base.total + (2)));",
+                  "pm.test('Reacciones respecto a la línea base', () => pm.expect(d.reacciones_recibidas).to.eql(base.reacciones + (1)));",
+                  "const esperado = d.total_interacciones ? (base.suma_sentimientos + (0.75))/d.total_interacciones : null;",
+                  "pm.test('Promedio de sentimiento recalculado', () => esperado === null ? pm.expect(d.sentimiento_promedio).to.eql(null) : pm.expect(d.sentimiento_promedio).to.be.closeTo(esperado, 1e-9));",
+                  "pm.test('Mapa de calor consistente', () => pm.expect(d.actividad_semanal.reduce((s,x)=>s+x.total,0)).to.eql(d.total_interacciones));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T41 Confirmar padrón histórico sin cambios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/analitica/usuarios",
+            "description": "Esperado: HTTP 200."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T41 Confirmar padrón histórico sin cambios: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "pm.test('El padrón no se altera con interacciones',()=>pm.expect(pm.response.json()).to.deep.eql(JSON.parse(cv.get('c360_base_usuarios'))));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 Limpieza exclusiva de registros propios",
+      "item": [
+        {
+          "name": "T42 Eliminar interacción propia",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "If-Match",
+                "value": "{{c360_version}}"
+              }
+            ],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_prueba}}",
+            "description": "Esperado: HTTP 204. Solo usa el ID recibido en el alta HTTP 201 de esta colección."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_prueba') === 'si', 'Falta una interacción propia activa. Ejecuta primero T12.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T42 Eliminar interacción propia: HTTP 204', () => pm.response.to.have.status(204));",
+                  "pm.test('Respuesta sin cuerpo', () => pm.expect(pm.response.text()).to.eql(''));",
+                  "if (pm.response.code === 204) {",
+                  "cv.set('c360_creada_prueba','no');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T43 Confirmar eliminación de la interacción propia",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_prueba}}",
+            "description": "Esperado: HTTP 404."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(Boolean(cv.get('c360_id_prueba')),'No hay ID propio para comprobar.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T43 Confirmar eliminación de la interacción propia: HTTP 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 404) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T44 Eliminar interacción de privacidad",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_privacidad}}",
+            "description": "Esperado: HTTP 204."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(cv.get('c360_creada_privacidad') === 'si', 'Falta la interacción de privacidad. Ejecuta primero T18.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T44 Eliminar interacción de privacidad: HTTP 204', () => pm.response.to.have.status(204));",
+                  "pm.test('Respuesta sin cuerpo', () => pm.expect(pm.response.text()).to.eql(''));",
+                  "if (pm.response.code === 204) {",
+                  "cv.set('c360_creada_privacidad','no');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T45 Confirmar eliminación de la prueba de privacidad",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/interacciones/{{c360_id_privacidad}}",
+            "description": "Esperado: HTTP 404."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(Boolean(cv.get('c360_id_privacidad')),'No hay ID de privacidad para comprobar.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T45 Confirmar eliminación de la prueba de privacidad: HTTP 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 404) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T46 Confirmar totales restaurados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/api/analitica/interacciones",
+            "description": "Esperado: HTTP 200. Sin otros escritores concurrentes, el total debe ser línea base +0. No se fija el total a 207."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');",
+                  "exigir(Boolean(cv.get('c360_base_interacciones')),'Falta línea base T11.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T46 Confirmar totales restaurados: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const d = pm.response.json();",
+                  "const base = JSON.parse(cv.get('c360_base_interacciones'));",
+                  "pm.test('Total respecto a la línea base', () => pm.expect(d.total_interacciones).to.eql(base.total + (0)));",
+                  "pm.test('Reacciones respecto a la línea base', () => pm.expect(d.reacciones_recibidas).to.eql(base.reacciones + (0)));",
+                  "const esperado = d.total_interacciones ? (base.suma_sentimientos + (0))/d.total_interacciones : null;",
+                  "pm.test('Promedio de sentimiento recalculado', () => esperado === null ? pm.expect(d.sentimiento_promedio).to.eql(null) : pm.expect(d.sentimiento_promedio).to.be.closeTo(esperado, 1e-9));",
+                  "pm.test('Mapa de calor consistente', () => pm.expect(d.actividad_semanal.reduce((s,x)=>s+x.total,0)).to.eql(d.total_interacciones));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 Cierre de sesión y revocación",
+      "item": [
+        {
+          "name": "T47 Cerrar todas las sesiones de la cuenta",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{c360_base_url}}/auth/logout",
+            "description": "Esperado: HTTP 200. También cerrará las sesiones de esta cuenta abiertas en el navegador. Conserva temporalmente el JWT para la prueba siguiente."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T47 Cerrar todas las sesiones de la cuenta: HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T48 Confirmar rechazo del JWT revocado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{c360_base_url}}/auth/me",
+            "description": "Esperado: HTTP 401. Después puedes ejecutar de nuevo T04 para iniciar sesión."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "function exigir(condicion, mensaje) {",
+                  "  if (!condicion) { console.error(mensaje); pm.execution.skipRequest(); }",
+                  "}",
+                  "exigir(Boolean(cv.get('c360_access_token')), 'Ejecuta primero T04 Login y comprueba HTTP 200.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "pm.test('T48 Confirmar rechazo del JWT revocado: HTTP 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Respuesta JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 401) {",
+                  "",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

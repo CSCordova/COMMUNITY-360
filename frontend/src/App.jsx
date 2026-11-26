@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { api } from './api';
 import { useAuth } from './auth';
+import ActivityPanel from './ActivityPanel';
 
 function Icon({ name, ...props }) {
   const paths = {
@@ -92,10 +93,10 @@ function Dashboard() {
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
-    api('/api/dashboard').then(value => { if (active) { setData(value); setError(''); } })
+    api('/api/analitica/usuarios').then(value => { if (active) { setData(value); setError(''); } })
       .catch(e => { if (active) { if (e.status === 401) expire(); else setError(e.message); } });
     return () => { active = false; };
-  }, [attempt]);
+  }, [attempt, expire]);
   async function logout() {
     setBusy(true); setError('');
     try { await signOut(); } catch (e) { setError(`No se pudo cerrar la sesión. ${e.message}`); }
@@ -104,7 +105,8 @@ function Dashboard() {
   return <div className="dashboard-layout"><header className="dashboard-header"><Brand/><div className="account-menu"><span><Icon name="user"/>{user.usuario}</span><button className="secondary-button" onClick={logout} disabled={busy}><Icon name="logout"/>{busy ? 'Cerrando…' : 'Cerrar sesión'}</button></div></header>
     <main className="dashboard-main"><p className="eyebrow">TU ESPACIO DE TRABAJO</p><h1>Hola, {user.usuario}.</h1><p className="dashboard-description">Bienvenido a COMMUNITY 360.</p>
       {error && <div className="dashboard-error"><p role="alert">{error}</p><button className="secondary-button" onClick={() => setAttempt(attempt + 1)}>Reintentar consulta</button></div>}
-      {!data && !error ? <p role="status">Cargando tu espacio…</p> : data && <section className="welcome-card"><div className="welcome-icon"><Icon name="chart" width="32" height="32"/></div><p className="eyebrow">UNA MIRADA COMPARTIDA</p><h2>El próximo capítulo<br />de tu comunidad.</h2><p>Tu acceso está listo. Las herramientas para explorar la actividad y conocer mejor a la comunidad estarán disponibles próximamente.</p><span className="verified-note"><Icon name="shield"/>Sesión verificada</span></section>}
+      <ActivityPanel expire={expire} history={data}/>
+      <span className="session-note"><Icon name="shield"/>Sesión verificada</span>
       <p className="dashboard-footnote">Este espacio está reservado para cuentas autorizadas. Al terminar, cierra tu sesión.</p>
     </main></div>;
 }

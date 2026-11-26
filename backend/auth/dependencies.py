@@ -27,6 +27,11 @@ def obtener_cuenta(request: Request,
         raise error_credenciales()
     if not token:
         raise error_credenciales()
+    return autenticar_token(token)
+
+
+def autenticar_token(token: str):
+    """La misma validación de firma, expiración y revocación para HTTP y WebSocket."""
     try:
         payload = verificar_token(token)
     except ValueError:

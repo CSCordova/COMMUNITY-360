@@ -14,7 +14,7 @@ def main():
         print("El usuario debe tener entre 4 y 32 caracteres.")
         return
 
-    password = leer_secreto("Contraseña, de 8 a 12 caracteres (oculta): ")
+    password = leer_secreto("Contraseña, de 8 a 14 caracteres (oculta): ")
     confirmar = leer_secreto("Confirmar contraseña (oculta): ")
 
     try:

@@ -16,4 +16,4 @@ COPY turso_http.py ./
 COPY --from=frontend /build/frontend/dist/ ./frontend/dist/
 RUN useradd --create-home appuser
 USER appuser
-CMD ["sh", "-c", "exec uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-10000} --workers 1"]
+CMD ["sh", "-c", "exec uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-10000} --workers 1 --proxy-headers --forwarded-allow-ips '*' --ws-max-size 4096 --ws-max-queue 8"]

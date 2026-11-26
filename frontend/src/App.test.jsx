@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from './auth';
@@ -10,8 +10,24 @@ let failLogin;
 let failLogout;
 let unavailable;
 const account = { id_cuenta: 1, usuario: 'cuenta_prueba' };
+class TestSocket {
+  static OPEN = 1;
+  static connections = [];
+  readyState = 0;
+  constructor(url) { this.url = url; TestSocket.connections.push(this); }
+  send = vi.fn();
+  close = vi.fn(() => { this.readyState = 3; });
+  emit(data) { this.readyState = 1; this.onmessage?.({ data: JSON.stringify(data) }); }
+}
+function snapshot(revision, changes = {}) {
+  return { tipo: revision ? 'interacciones_actualizadas' : 'estado_inicial', servidor: 'prueba', revision,
+    fecha: '2026-11-26T00:00:00Z', indicadores: { total_interacciones: 207, usuarios_participantes: 100,
+      sentimiento_promedio: 0.5, reacciones_recibidas: 444, ...changes } };
+}
 beforeEach(() => {
   loggedIn = false; failLogin = false; failLogout = false; unavailable = false;
+  TestSocket.connections = [];
+  vi.stubGlobal('WebSocket', TestSocket);
   vi.stubGlobal('fetch', vi.fn(async (path, options = {}) => {
     let status = 200; let data = {};
     if (unavailable) { status = 503; data = { detail: 'Servicio temporalmente no disponible.' }; }
@@ -19,8 +35,61 @@ beforeEach(() => {
     else if (path === '/auth/login') { status = failLogin ? 401 : 200; loggedIn = !failLogin; data = { access_token: 'NO-ALMACENAR', expires_in: 1800 }; }
     else if (path === '/auth/logout') { status = failLogout ? 503 : 200; if (!failLogout) loggedIn = false; }
     else if (path === '/api/dashboard') { status = loggedIn ? 200 : 401; data = { cuenta: account, analitica_disponible: false }; }
+    else if (path === '/api/analitica/usuarios') { data = { indicadores: { usuarios: 1068, artistas: 400 } }; }
     return { ok: status < 400, status, json: async () => data };
   }));
+});
+
+describe('Actividad en tiempo real', () => {
+  async function dashboard() {
+    loggedIn = true; mount('/dashboard');
+    await screen.findByText('Sesión verificada');
+    return TestSocket.connections.at(-1);
+  }
+  it('recibe cifras por WebSocket y actualiza sin otra consulta REST', async () => {
+    const socket = await dashboard();
+    expect(socket.url).toMatch(/\/ws\/dashboard$/);
+    expect(socket.url).not.toContain('token');
+    expect(screen.queryByText('207')).not.toBeInTheDocument();
+    act(() => socket.emit(snapshot(0)));
+    expect(await screen.findByText('207')).toBeInTheDocument();
+    const count = fetch.mock.calls.length;
+    act(() => socket.emit({ ...snapshot(1, { total_interacciones: 208, sentimiento_promedio: -0.3 }), operacion: 'creada', id_interaccion: 'I9000001' }));
+    expect(screen.getByText('208')).toBeInTheDocument();
+    expect(screen.getByText('-0.300')).toBeInTheDocument();
+    expect(screen.getByText('Interacción creada · I9000001')).toBeInTheDocument();
+    expect(fetch.mock.calls).toHaveLength(count);
+  });
+  it('ignora revisiones antiguas y conserva cifras ante un fallo de actualización', async () => {
+    const socket = await dashboard();
+    act(() => socket.emit(snapshot(2, { total_interacciones: 209 })));
+    act(() => socket.emit(snapshot(1)));
+    expect(screen.getByText('209')).toBeInTheDocument();
+    act(() => socket.emit({ tipo: 'error_datos' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Conservamos la última lectura');
+    expect(screen.getByText('209')).toBeInTheDocument();
+    expect(screen.queryByText('En vivo')).not.toBeInTheDocument();
+  });
+  it('termina la sesión cuando el servidor revoca el socket', async () => {
+    const socket = await dashboard();
+    await act(async () => { await socket.onclose({ code: 4401 }); });
+    expect(await screen.findByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument();
+    expect(socket.close).toHaveBeenCalled();
+  });
+  it('reconecta y recupera el estado después de una interrupción', async () => {
+    const socket = await dashboard();
+    vi.useFakeTimers();
+    try {
+      await act(async () => { await socket.onclose({ code: 1006 }); });
+      expect(screen.getByText('Reconectando…')).toBeInTheDocument();
+      await act(async () => { await vi.advanceTimersByTimeAsync(1400); });
+      const next = TestSocket.connections.at(-1);
+      expect(next).not.toBe(socket);
+      act(() => next.emit({ ...snapshot(0, { total_interacciones: 210 }), servidor: 'reiniciado' }));
+      expect(screen.getByText('210')).toBeInTheDocument();
+      expect(screen.getByText('En vivo')).toBeInTheDocument();
+    } finally { vi.useRealTimers(); }
+  });
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 function mount(path = '/login') {

@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, Request, HTTPException
+from fastapi import Depends, FastAPI, Request, HTTPException, WebSocket
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -7,6 +7,8 @@ from backend.auth.routes import router as auth_router
 from backend.usuarios.routes import router as usuarios_router
 from backend.interacciones.routes import router as interacciones_router
 from backend.analitica.routes import router as analitica_router
+from backend.realtime.routes import router as realtime_router
+from backend.realtime.hub import DashboardHub
 from backend.core.errors import DataServiceError, InteractionConflict, InteractionNotFound
 from backend.core.config import ROOT
 from turso_http import TursoHTTPError
@@ -16,6 +18,8 @@ app.include_router(auth_router)
 app.include_router(usuarios_router)
 app.include_router(interacciones_router)
 app.include_router(analitica_router)
+app.include_router(realtime_router)
+app.state.realtime = DashboardHub()
 
 
 @app.middleware("http")
@@ -32,6 +36,9 @@ async def cabeceras_privacidad(request: Request, call_next):
 @app.exception_handler(TursoHTTPError)
 @app.exception_handler(DataServiceError)
 async def servicio_no_disponible(request, exc):
+    if isinstance(request, WebSocket):
+        await request.close(code=1013)
+        return
     return JSONResponse(status_code=503, content={"detail": "No se pudo consultar el servicio de datos. Inténtalo de nuevo."})
 
 
@@ -60,7 +67,7 @@ def verificar_servidor():
 @app.get("/api/dashboard", tags=["Dashboard"])
 def dashboard(cuenta: dict = Depends(obtener_cuenta)):
     return {"cuenta": {"id_cuenta": cuenta["id_cuenta"], "usuario": cuenta["usuario"]},
-            "analitica_disponible": False}
+            "analitica_disponible": True}
 
 
 FRONTEND = ROOT / "frontend/dist"
