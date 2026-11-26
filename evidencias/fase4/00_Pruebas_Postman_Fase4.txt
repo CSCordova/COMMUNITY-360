@@ -1,0 +1,357 @@
+COMMUNITY 360 - LISTA DE PRUEBAS POSTMAN DE LA FASE 4
+
+OBJETIVO
+Validar en Render las consultas y operaciones reales de la API. Este archivo es
+una lista de trabajo para tus pruebas, no el documento técnico del proyecto.
+Los resultados se dejan PENDIENTES hasta que los ejecutes y conserves evidencia.
+
+ARCHIVO PARA IMPORTAR
+COMMUNITY360_Fase4_Completa.postman_collection.json (en esta misma carpeta).
+
+PREPARACIÓN
+1. En Postman Desktop: Import -> Files -> selecciona el JSON de esta carpeta.
+2. Selecciona la colección "COMMUNITY 360 Fase 4 - Pruebas completas".
+3. En Variables, completa SOLO el valor LOCAL de c360_password con tu contraseña.
+   c360_usuario ya contiene isaidemo; puedes cambiarlo si usarás otra cuenta.
+   La URL c360_base_url ya apunta al servicio real de Render, sin barra final.
+4. Usa "No Environment" para evitar variables ajenas que sustituyan los valores.
+   No compartas/sincronices el valor privado ni exportes una copia con contraseña
+   o JWT reales. El JSON entregado tiene ambos campos vacíos.
+5. Ejecuta por orden T01, T02, etc., con Send; o usa Run collection con UNA
+   iteración, en el orden de las carpetas y con timeout de al menos 60000 ms.
+6. La colección guarda JWT, IDs, ETag y líneas base automáticamente. No tienes
+   que copiar el access_token. Las pruebas usan Bearer y deshabilitan cookies.
+7. Para capturar la prueba de privacidad en Firestore, haz la ejecución manual
+   y detente después de T19. Copia el ID de c360_id_privacidad, revísalo en la
+   consola de Firestore y continúa con el resto; al final se borrará ese ID.
+
+REGLAS DE EJECUCIÓN
+- Haz una prueba a la vez y evita que otra persona escriba interacciones mientras
+  comparas las líneas base; si ocurre, los cambios de totales pueden ser legítimos.
+- En Test Results, una prueba verde significa que coincidió con lo esperado.
+  HTTP 401, 403, 404, 409 y 422 son CORRECTOS en sus casos de rechazo.
+- Si falla una prueba positiva, detente y comparte el código HTTP y el detalle
+  sin credenciales. Una solicitud marcada Skipped no cuenta como aprobada:
+  indica que falta un prerrequisito y debes ejecutar los pasos previos.
+- GET y DELETE no llevan body. Logout no lleva body. POST/PUT/PATCH con datos
+  usan Body -> raw -> JSON, ya configurado en cada petición.
+- No cambies manualmente c360_id_prueba ni c360_id_privacidad por IDs importados.
+  Son exclusivamente los dos registros de demostración creados por la colección.
+- Si un ID aleatorio choca con otro existente, el alta responde 409 sin sobrescribir.
+  Reintenta el alta; las modificaciones solo se habilitan después de un 201.
+- Si interrumpes el recorrido después de las altas, vuelve a T04 si venció el JWT
+  y ejecuta la carpeta 07 para limpiar SOLO esos registros propios. Si la versión
+  del documento cambió, vuelve a T13 para leer su ETag antes de eliminarlo.
+- Al repetir el recorrido completo, limpia primero la ejecución anterior y vuelve
+  a establecer las líneas base en T10 y T11. No regeneres ni recargues el ETL.
+
+ESTRUCTURA DE PAYLOADS
+El body visible de cada petición ya trae los campos que usa ese endpoint.
+
+POST /auth/login: usuario y password. El pre-request serializa ambos para que
+comillas o barras dentro de la contraseña no rompan el JSON.
+
+POST /api/interacciones: id_interaccion, id_usuario, timestamp con zona,
+canal, tipo, texto (salvo reacción), tema, sentimiento, idioma, dispositivo,
+reacciones_recibidas, etiquetas y ubicación cuando corresponda.
+longitud_texto se puede omitir: la calcula el servidor. La prueba de longitud
+inválida la envía expresamente para comprobar el rechazo.
+
+PUT /api/interacciones/{id}: envía el documento completo con todos los campos
+obligatorios; id_interaccion va en la ruta, no en el body. ubicacion:null elimina
+la ubicación de esa interacción. No se cambia el consentimiento del usuario.
+
+PATCH /api/interacciones/{id}: envía solo los campos a cambiar. No admite body
+vacío; solo texto y ubicacion pueden ser null, y texto:null requiere tipo=reaccion.
+Si cambias texto y no envías longitud_texto, se recalcula.
+
+Los IDs cumplen U + 6 dígitos e I + 7 dígitos. Los nuevos ejemplos usan I9xxxxxx
+para distinguirlos del conjunto importado; siguen siendo datos de demostración.
+sentimiento: -1 a 1; contadores: enteros no negativos (no booleanos);
+tipos: mensaje, comentario, reaccion, respuesta_encuesta, rsvp_evento.
+
+LISTA DE PRUEBAS
+Marca [x] solo después de comprobar HTTP y Test Results.
+
+[ ] T01 Servidor activo
+    GET /health
+    Esperado: HTTP 200. Sin body ni credenciales.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T02 Ruta privada sin sesión
+    GET /api/usuarios
+    Esperado: HTTP 401. Cookie jar deshabilitado para que una cookie previa no falsee la prueba.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T03 Login incorrecto
+    POST /auth/login
+    Esperado: HTTP 401. Credenciales ficticias de rechazo; no reemplazar por contraseñas reales.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T04 Login
+    POST /auth/login
+    Esperado: HTTP 200. Guarda automáticamente el token para las solicitudes siguientes. Oculta el body del login en capturas.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T05 Cuenta autenticada
+    GET /auth/me
+    Esperado: HTTP 200.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T06 Acceso al dashboard protegido
+    GET /api/dashboard
+    Esperado: HTTP 200. El dashboard todavía no integra gráficas ni WebSockets.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T07 Usuarios de Turso y elección de IDs reales
+    GET /api/usuarios?limite=100&desplazamiento={{c360_desplazamiento_usuarios}}
+    Esperado: HTTP 200. Si no encuentra ambos casos, cambia c360_desplazamiento_usuarios a 100, 200, etc. y repite T07.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T08 Usuario con ubicación autorizada
+    GET /api/usuarios/{{c360_usuario_si}}
+    Esperado: HTTP 200.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T09 Usuario sin ubicación autorizada
+    GET /api/usuarios/{{c360_usuario_no}}
+    Esperado: HTTP 200.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T10 Padrón histórico de referencia
+    GET /api/analitica/usuarios
+    Esperado: HTTP 200. Conserva la línea base de los indicadores históricos del padrón.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T11 Interacciones iniciales de referencia
+    GET /api/analitica/interacciones
+    Esperado: HTTP 200. Registra el total real existente antes de escribir. En la carga inicial se esperaban 207; no se fuerza esa cantidad.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T12 Crear interacción propia con ubicación autorizada
+    POST /api/interacciones
+    Esperado: HTTP 201. Escribe SOLO un documento de demostración. ID I9xxxxxx generado al enviar.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T13 Consultar interacción creada
+    GET /api/interacciones/{{c360_id_prueba}}
+    Esperado: HTTP 200.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T14 Filtrar y paginar interacciones
+    GET /api/interacciones?id_usuario={{c360_usuario_si}}&tipo=mensaje&canal=Telegram&limite=100&desplazamiento=0
+    Esperado: HTTP 200.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T15 Analítica después del alta
+    GET /api/analitica/interacciones
+    Esperado: HTTP 200. Sin otros escritores concurrentes, el total debe ser línea base +1. No se fija el total a 207.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T16 Rechazar ID duplicado
+    POST /api/interacciones
+    Esperado: HTTP 409. Reenvía el mismo ID; debe rechazarlo sin sobrescribir el documento.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T17 Confirmar que el duplicado no alteró el registro
+    GET /api/interacciones/{{c360_id_prueba}}
+    Esperado: HTTP 200.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T18 Crear prueba para usuario sin consentimiento
+    POST /api/interacciones
+    Esperado: HTTP 201. La ubicación enviada es ficticia y debe ser excluida. Comprueba también el documento en Firestore antes de borrarlo si necesitas acreditar la persistencia sin geografía.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T19 Leer prueba sin consentimiento
+    GET /api/interacciones/{{c360_id_privacidad}}
+    Esperado: HTTP 200.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T20 Analítica después de las dos altas
+    GET /api/analitica/interacciones
+    Esperado: HTTP 200. Sin otros escritores concurrentes, el total debe ser línea base +2. No se fija el total a 207.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T21 Verificar usuario inexistente
+    GET /api/usuarios/U999999
+    Esperado: HTTP 404.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T22 Rechazar referencia a usuario inexistente
+    POST /api/interacciones
+    Esperado: HTTP 422. Se reutiliza un ID propio existente; incluso si fallase la validación referencial, no se crea un documento ajeno.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T23 Rechazar sentimiento fuera de rango
+    POST /api/interacciones
+    Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T24 Rechazar contador negativo
+    POST /api/interacciones
+    Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T25 Rechazar booleano como contador
+    POST /api/interacciones
+    Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T26 Rechazar fecha sin zona horaria
+    POST /api/interacciones
+    Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T27 Rechazar longitud de texto incorrecta
+    POST /api/interacciones
+    Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T28 Rechazar texto ausente en mensaje
+    POST /api/interacciones
+    Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T29 Rechazar campo no permitido
+    POST /api/interacciones
+    Esperado: HTTP 422. Payload inválido intencionalmente. No debe escribir ni modificar datos.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T30 Rechazar PATCH vacío
+    PATCH /api/interacciones/{{c360_id_prueba}}
+    Esperado: HTTP 422.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T31 Rechazar identificador mal formado
+    GET /api/interacciones/I1
+    Esperado: HTTP 422.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T32 Rechazar paginación fuera del límite
+    GET /api/interacciones?limite=101
+    Esperado: HTTP 422.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T33 Rechazar rango de fechas invertido
+    GET /api/interacciones?inicio=2026-11-26T00:00:00Z&fin=2026-11-25T00:00:00Z
+    Esperado: HTTP 422.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T34 Rechazar token inválido aunque exista cookie
+    GET /api/interacciones
+    Esperado: HTTP 401.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T35 Rechazar escritura desde origen ajeno
+    PATCH /api/interacciones/{{c360_id_prueba}}
+    Esperado: HTTP 403.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T36 Modificar con PATCH y versión vigente
+    PATCH /api/interacciones/{{c360_id_prueba}}
+    Esperado: HTTP 200.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T37 Analítica después del PATCH
+    GET /api/analitica/interacciones
+    Esperado: HTTP 200. Sin otros escritores concurrentes, el total debe ser línea base +2. No se fija el total a 207.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T38 Rechazar modificación con versión anterior
+    PATCH /api/interacciones/{{c360_id_prueba}}
+    Esperado: HTTP 409.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T39 Reemplazar con PUT completo
+    PUT /api/interacciones/{{c360_id_prueba}}
+    Esperado: HTTP 200. PUT recibe todos los campos obligatorios; el ID solo va en la ruta. ubicacion:null retira la ubicación de esta interacción.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T40 Analítica después del PUT
+    GET /api/analitica/interacciones
+    Esperado: HTTP 200. Sin otros escritores concurrentes, el total debe ser línea base +2. No se fija el total a 207.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T41 Confirmar padrón histórico sin cambios
+    GET /api/analitica/usuarios
+    Esperado: HTTP 200.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T42 Eliminar interacción propia
+    DELETE /api/interacciones/{{c360_id_prueba}}
+    Esperado: HTTP 204. Solo usa el ID recibido en el alta HTTP 201 de esta colección.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T43 Confirmar eliminación de la interacción propia
+    GET /api/interacciones/{{c360_id_prueba}}
+    Esperado: HTTP 404.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T44 Eliminar interacción de privacidad
+    DELETE /api/interacciones/{{c360_id_privacidad}}
+    Esperado: HTTP 204.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T45 Confirmar eliminación de la prueba de privacidad
+    GET /api/interacciones/{{c360_id_privacidad}}
+    Esperado: HTTP 404.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T46 Confirmar totales restaurados
+    GET /api/analitica/interacciones
+    Esperado: HTTP 200. Sin otros escritores concurrentes, el total debe ser línea base +0. No se fija el total a 207.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T47 Cerrar todas las sesiones de la cuenta
+    POST /auth/logout
+    Esperado: HTTP 200. También cerrará las sesiones de esta cuenta abiertas en el navegador. Conserva temporalmente el JWT para la prueba siguiente.
+    Resultado real: __________  Evidencia: __________
+
+[ ] T48 Confirmar rechazo del JWT revocado
+    GET /auth/me
+    Esperado: HTTP 401. Después puedes ejecutar de nuevo T04 para iniciar sesión.
+    Resultado real: __________  Evidencia: __________
+
+CRITERIOS PARA CERRAR LA FASE 4
+[ ] Funcionan las consultas reales de usuarios en Turso e interacciones en Firestore.
+[ ] Hay evidencia de altas 201, duplicados 409, cambios 200 y bajas 204/404.
+[ ] Los payloads inválidos devuelven 422 y no alteran el registro propio.
+[ ] Las rutas privadas rechazan solicitudes sin sesión o con token inválido.
+[ ] Las referencias a usuarios inexistentes son rechazadas.
+[ ] La prueba de privacidad no devuelve ubicación y el documento real de Firestore
+    tampoco contiene el campo ubicacion. No basta solo con mirar la respuesta GET,
+    porque la API también filtra geografía en sus lecturas.
+[ ] La analítica refleja altas, PATCH, PUT y bajas; al limpiar vuelve a la línea base.
+[ ] El padrón histórico permanece igual; no se incrementan sus contadores del CSV.
+[ ] Los dos documentos de prueba quedaron eliminados; no se tocó el CSV original.
+[ ] El logout invalida el JWT. La cuenta puede volver a entrar después.
+
+CAPTURAS
+Guárdalas en esta carpeta o envíamelas para guardarlas aquí. Usaremos consecutivos
+independientes de los números Txx: 01_nombre_descriptivo.png, 02_..., etc.
+Conviene capturar: lecturas reales; alta 201; duplicado 409; referencia rechazada;
+privacidad (API y documento Firestore); PATCH y PUT; cambios en la analítica;
+eliminación y 404; restauración de totales; JWT revocado.
+Oculta Authorization, Cookies y cualquier JWT de la respuesta del login.
+
+AVANCE ACTUAL
+- API implementada: 15 operaciones de servicio/autenticación/datos en OpenAPI.
+- 24 pruebas automatizadas de Fase 4 aprobadas en entorno temporal; 66 pruebas
+  del proyecto pasaron en la revisión anterior.
+- Servicio desplegado en Render; el propietario confirmó que el login funciona.
+- Esta lista y la colección preparan el recorrido real de Postman.
+- La secuencia del JSON se comprobó contra un servidor temporal con SQL y
+  repositorio documental ficticios: 48 solicitudes y 143 aserciones sin fallos.
+  Esa comprobación valida el paquete de pruebas; no ejecutó escrituras en Render.
+- Falta ejecutar y evidenciar este recorrido contra Render y Firestore antes de
+  declarar la Fase 4 cerrada. Las pruebas locales no reemplazan esa verificación.
+- Los WebSockets y las gráficas del dashboard corresponden a fases posteriores.
+  El monitor externo cada 2 minutos es una tarea de despliegue aparte y aún no
+  se ha confirmado su creación.
+
+REFERENCIAS DE POSTMAN
+Variables y valores locales:
+https://learning.postman.com/docs/use/send-requests/variables/variables/
+Formato de la colección:
+https://schema.postman.com/json/collection/v2.1.0/collection.json

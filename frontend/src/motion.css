@@ -1,0 +1,44 @@
+/* Only the changing view is captured; the surrounding workspace stays anchored. */
+:root { view-transition-name: none; --motion-direction: 1; }
+[data-motion-scope="page"] .workspace-content { view-transition-name: workspace-panel; }
+[data-motion-scope="page"] .nav-current { view-transition-name: navigation-marker; }
+[data-motion-scope="page"] :is(.login-layout, .access-info-page) { view-transition-name: access-panel; }
+[data-motion-scope="tab"] .chart-tab-panel:not([hidden]) { view-transition-name: chart-panel; }
+::view-transition { pointer-events: none; }
+::view-transition-group(*) { animation-duration: 420ms; animation-timing-function: cubic-bezier(.22,.75,.2,1); }
+::view-transition-old(workspace-panel), ::view-transition-old(chart-panel), ::view-transition-old(access-panel) {
+  animation: view-leave 180ms ease-out both; mix-blend-mode: normal;
+}
+::view-transition-new(workspace-panel), ::view-transition-new(chart-panel), ::view-transition-new(access-panel) {
+  animation: view-enter 420ms cubic-bezier(.16,.8,.24,1) both; mix-blend-mode: normal;
+}
+@keyframes view-leave { to { opacity: 0; transform: translateX(calc(-16px * var(--motion-direction))); } }
+@keyframes view-enter { from { opacity: 0; transform: translateX(calc(24px * var(--motion-direction))); } to { opacity: 1; transform: translateX(0); } }
+.workspace-nav-item { position: relative; isolation: isolate; }
+.workspace-nav-item.is-active { background: transparent; border-color: transparent; }
+.workspace-nav-item .nav-current { display: block; position: absolute; z-index: -1; inset: -1px; border-radius: inherit; background: #34452f; border: 1px solid #536946; }
+.workspace-nav-item>svg { transition: transform 260ms cubic-bezier(.2,.7,.2,1), color 260ms; }
+.workspace-nav-item:hover>svg { transform: translateY(-2px); }
+.workspace-nav-item:active>svg { transform: scale(.9); }
+.fluid-number { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fluid-number>span { font: inherit; color: inherit; letter-spacing: inherit; }
+.metric-value.fluid-number { animation: none; }
+.workspace .metric-card, .workspace .chart-card, .workspace .horizontal-bar-track i { animation: none; }
+.horizontal-bars { position: relative; }
+.horizontal-bar-track i { transition: width 700ms cubic-bezier(.2,.7,.2,1), background 400ms; }
+.donut-layout circle:not(.donut-track) { transition: opacity 200ms; animation: none; }
+.trend-chart polyline { animation: none; stroke-dasharray: none; }
+.trend-chart polygon { animation: none; }
+.trend-chart circle { transition: cx 700ms cubic-bezier(.2,.7,.2,1), cy 700ms cubic-bezier(.2,.7,.2,1), r 200ms, fill 200ms; }
+.heatmap-scroll rect { transition: fill 700ms cubic-bezier(.2,.7,.2,1), opacity 200ms; }
+.chart-card, .metric-card { transition: border-color 300ms, box-shadow 300ms, transform 300ms; }
+[data-motion-scope="tab"] .chart-tab-panel { animation: none; }
+@keyframes view-dissolve { from { opacity: 0; } to { opacity: 1; } }
+@media(prefers-reduced-motion:reduce) {
+  ::view-transition-group(*) { animation-duration: 120ms; }
+  ::view-transition-old(workspace-panel), ::view-transition-old(chart-panel), ::view-transition-old(access-panel) { animation: view-dissolve 100ms reverse both; }
+  ::view-transition-new(workspace-panel), ::view-transition-new(chart-panel), ::view-transition-new(access-panel) { animation: view-dissolve 120ms both; }
+  .workspace-nav-item>svg { transition: none; }
+  .horizontal-bar-track i, .heatmap-scroll rect { transition-duration: 120ms; }
+  .trend-chart circle { transition: fill 120ms; }
+}

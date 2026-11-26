@@ -1,4 +1,6 @@
 from backend.database.turso import conectar_turso
+from datetime import date
+from hashlib import sha256
 
 PROYECCION = """
 SELECT u.id_usuario,u.alias,u.fecha_ingreso,e.nombre_estatus AS estatus,
@@ -74,9 +76,35 @@ class UsuariosRepository:
                 "por_plataforma": "SELECT p.nombre_plataforma,COUNT(*) FROM usuarios u JOIN cat_plataformas p USING(id_plataforma) GROUP BY p.nombre_plataforma ORDER BY p.nombre_plataforma",
                 "por_interes": "SELECT i.nombre_interes,COUNT(*) FROM usuarios u JOIN cat_intereses i USING(id_interes) GROUP BY i.nombre_interes ORDER BY i.nombre_interes",
                 "por_rango_edad": "SELECT r.nombre_rango,COUNT(*) FROM usuarios u JOIN cat_rangos_edad r USING(id_rango_edad) GROUP BY r.nombre_rango ORDER BY r.nombre_rango",
+                "por_especie": "SELECT f.nombre_especie,COUNT(*) FROM usuarios u JOIN cat_especies_fursona f USING(id_especie) GROUP BY f.nombre_especie ORDER BY f.nombre_especie",
             }.items():
                 resultado[nombre] = [{"categoria": f[0], "total": f[1]} for f in db.execute(consulta).fetchall()]
         return {"fuente": "padron_historico_turso", "indicadores": resultado}
+
+    def territorio_autorizado(self):
+        with conectar_turso() as db:
+            rows = db.execute('''SELECT u.id_usuario,l.pais,l.estado,l.ciudad,g.latitud,g.longitud
+                FROM usuarios u JOIN ubicaciones_usuario g USING(id_usuario)
+                JOIN cat_localidades l USING(id_localidad) WHERE u.consentimiento_datos='si' ''').fetchall()
+        return [dict(zip(('id_usuario','pais','estado','ciudad','latitud','longitud'), row)) for row in rows]
+
+    def participacion(self, estatus=None, orden='inactividad', limite=25, desplazamiento=0):
+        condition = ' WHERE e.nombre_estatus=?' if estatus else ''
+        params = (estatus,) if estatus else ()
+        join = ' FROM usuarios u JOIN cat_estatus e USING(id_estatus)'
+        order = "CASE e.nombre_estatus WHEN 'en_riesgo' THEN 0 WHEN 'inactivo' THEN 1 ELSE 2 END," if orden == 'estatus' else ''
+        with conectar_turso() as db:
+            corte = db.execute('SELECT MAX(ultima_actividad) FROM usuarios').fetchone()[0]
+            total = db.execute('SELECT COUNT(*)' + join + condition, params).fetchone()[0]
+            rows = db.execute('SELECT u.id_usuario,e.nombre_estatus,u.ultima_actividad,u.mensajes_30d' + join + condition
+                              + ' ORDER BY ' + order + 'u.ultima_actividad,u.id_usuario LIMIT ? OFFSET ?',
+                              (*params, limite, desplazamiento)).fetchall()
+        return {'fuente': 'padron_historico_turso', 'fecha_corte': corte, 'total': total, 'limite': limite,
+                'desplazamiento': desplazamiento, 'items': [
+                    {'referencia': sha256(row[0].encode()).hexdigest()[:12], 'usuario': 'U***' + row[0][-3:],
+                     'estatus': row[1], 'ultima_actividad': row[2], 'mensajes_30d': row[3],
+                     'dias_sin_actividad': max(0, (date.fromisoformat(corte) - date.fromisoformat(row[2])).days)}
+                    for row in rows]}
 
 
 def obtener_usuarios_repository():

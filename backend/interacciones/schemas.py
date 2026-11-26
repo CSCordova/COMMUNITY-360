@@ -110,8 +110,17 @@ class FiltrosInteracciones(BaseModel):
     tipo: Tipo | None = None
     canal: TextoCorto | None = None
     tema: TextoCorto | None = None
+    dia_semana: Annotated[int, Field(ge=0, le=6)] | None = None
+    hora: Annotated[int, Field(ge=0, le=23)] | None = None
     inicio: AwareDatetime | None = None
     fin: AwareDatetime | None = None
+
+    @field_validator("dia_semana", "hora", mode="before")
+    @classmethod
+    def franja_entera(cls, valor):
+        if isinstance(valor, bool):
+            raise ValueError("El día y la hora deben ser números enteros.")
+        return valor
 
     @model_validator(mode="after")
     def fechas_ordenadas(self):
@@ -121,5 +130,7 @@ class FiltrosInteracciones(BaseModel):
 
 
 class ConsultaInteracciones(FiltrosInteracciones):
+    buscar: Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] = ""
+    orden: Literal["fecha_desc", "fecha_asc", "reacciones_desc", "sentimiento_asc", "sentimiento_desc"] = "fecha_desc"
     limite: Annotated[int, Field(ge=1, le=100)] = 25
     desplazamiento: Annotated[int, Field(ge=0)] = 0

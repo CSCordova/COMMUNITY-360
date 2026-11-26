@@ -19,7 +19,7 @@ def obtener_servicio(repo: InteraccionesRepository = Depends(obtener_interaccion
 @router.get("")
 def listar_interacciones(filtros: Annotated[ConsultaInteracciones, Query()],
                          servicio: InteraccionesService = Depends(obtener_servicio)):
-    datos = servicio.consultar(filtros)
+    datos = servicio.buscar_registros(filtros)
     return {"total": len(datos), "limite": filtros.limite, "desplazamiento": filtros.desplazamiento,
             "items": datos[filtros.desplazamiento:filtros.desplazamiento + filtros.limite]}
 

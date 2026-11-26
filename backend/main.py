@@ -12,6 +12,7 @@ from backend.realtime.hub import DashboardHub
 from backend.core.errors import DataServiceError, InteractionConflict, InteractionNotFound
 from backend.core.config import ROOT
 from turso_http import TursoHTTPError
+from urllib.parse import quote
 
 app = FastAPI(title="COMMUNITY 360 API", description="Backend del sistema COMMUNITY 360", version="1.0.0")
 app.include_router(auth_router)
@@ -87,17 +88,20 @@ def inicio():
 
 
 @app.get("/login", include_in_schema=False)
+@app.get("/acceso", include_in_schema=False)
 def login_pagina():
     return pagina()
 
 
 @app.get("/dashboard", include_in_schema=False)
+@app.get("/dashboard/{ruta:path}", include_in_schema=False)
 def dashboard_pagina(request: Request):
     # La navegación del navegador usa la cookie; comprobar antes de servir la vista.
     try:
         obtener_cuenta(request, None)
     except HTTPException as exc:
         if exc.status_code == 401:
-            return RedirectResponse("/login", status_code=303)
+            destino = "/login" if request.url.path == "/dashboard" else "/login?next=" + quote(request.url.path, safe="")
+            return RedirectResponse(destino, status_code=303)
         raise
     return pagina()

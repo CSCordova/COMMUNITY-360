@@ -14,3 +14,10 @@ frontend/test-results/
 tmp/
 .env.*
 !.env.example
+
+# Evidencias privadas; conservar solo las plantillas de pruebas sin credenciales.
+evidencias/*
+!evidencias/fase4/
+evidencias/fase4/*
+!evidencias/fase4/00_Pruebas_Postman_Fase4.txt
+!evidencias/fase4/COMMUNITY360_Fase4_Completa.postman_collection.json

@@ -4,6 +4,10 @@ export class ApiError extends Error {
 
 export async function api(path, options = {}) {
   const controller = new AbortController();
+  const external = options.signal;
+  const cancel = () => controller.abort();
+  external?.addEventListener('abort', cancel, { once: true });
+  if (external?.aborted) controller.abort();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
     const response = await fetch(path, {
@@ -18,7 +22,8 @@ export async function api(path, options = {}) {
     }
     return data;
   } catch (error) {
+    if (external?.aborted) throw error;
     if (error instanceof ApiError) throw error;
     throw new ApiError('No pudimos conectar. Comprueba tu conexión e inténtalo de nuevo.', 0);
-  } finally { clearTimeout(timeout); }
+  } finally { clearTimeout(timeout); external?.removeEventListener('abort', cancel); }
 }

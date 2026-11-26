@@ -1,75 +1,106 @@
-import { useState } from 'react';
-import { useRealtime } from './useRealtime';
-import { BarChart, ChartCard, DonutChart, Heatmap, TrendChart, categoryLabel, formatNumber } from './charts';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { FluidNumber, MotionLink as Link, useMotion } from './motion';
+import { Icon, ViewTabs } from './ui';
+import { BarChart, ChartCard, DonutChart, TrendChart, categoryLabel, formatNumber } from './charts';
+import { cleanFilters, filterDraft, filterRequest, filterNames, filterLabel, interactionLabel, leaders } from './analysis';
+import ActivityFilters from './ActivityFilters';
+import InteractionRecords from './InteractionRecords';
+import SelectionSummary from './SelectionSummary';
+import { ActivityInsights, HistoricalContext } from './CommunityInsights';
+import { TopicAnalysis, TrendAnalysis, HourAnalysis } from './ExplorationCharts';
 
-const cleanFilters = { inicio: '', fin: '', canal: '', tipo: '', tema: '' };
 const date = value => new Date(value).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
-function Filters({ options = {}, status, applyFilters, onApplied }) {
-  const [draft, setDraft] = useState(cleanFilters);
-  const [error, setError] = useState('');
-  const change = (key, value) => setDraft(previous => ({ ...previous, [key]: value }));
-  const choices = key => [...new Set([...(options[key] || []), ...(draft[key] ? [draft[key]] : [])])];
-  function submit(event) {
-    event.preventDefault();
-    if (draft.inicio && draft.fin && draft.inicio > draft.fin) { setError('La fecha inicial debe ser anterior o igual a la fecha final.'); return; }
-    setError('');
-    const filters = Object.fromEntries(Object.entries(draft).filter(([, value]) => value));
-    if (filters.inicio) filters.inicio += 'T00:00:00Z';
-    if (filters.fin) filters.fin += 'T23:59:59.999999Z';
-    applyFilters(filters); onApplied({ ...draft });
-  }
-  function reset() { setDraft(cleanFilters); setError(''); applyFilters({}); onApplied(cleanFilters); }
-  return <form className="dashboard-filters" aria-label="Filtros de actividad" onSubmit={submit}>
-    <div className="filter-intro"><span className="filter-icon" aria-hidden="true">≡</span><div><strong>Explora la actividad</strong><span>Filtra los indicadores y las gráficas en vivo.</span></div><span className="timezone-note">Fechas en UTC</span></div>
-    <div className="filter-fields"><label>Desde<input aria-label="Desde" type="date" value={draft.inicio} max={draft.fin || '9999-12-31'} onChange={e => change('inicio', e.target.value)}/></label><label>Hasta<input aria-label="Hasta" type="date" value={draft.fin} min={draft.inicio || '0001-01-01'} onChange={e => change('fin', e.target.value)}/></label>{[['canal', 'Canal'], ['tipo', 'Tipo de interacción'], ['tema', 'Tema']].map(([key, label]) => <label key={key}>{label}<select aria-label={label} value={draft[key]} onChange={e => change(key, e.target.value)}><option value="">{key === 'canal' ? 'Todos los canales' : key === 'tipo' ? 'Todos los tipos' : 'Todos los temas'}</option>{choices(key).map(value => <option key={value} value={value}>{categoryLabel(value)}</option>)}</select></label>)}</div>
-    <div className="filter-actions"><span>El resumen histórico conserva su corte de origen.</span><div><button className="text-button" type="button" onClick={reset} disabled={status === 'filtrando'}>Limpiar filtros</button><button className="primary-button apply-button" type="submit" disabled={status === 'filtrando'}>{status === 'filtrando' ? 'Aplicando…' : 'Aplicar filtros'}</button></div></div>{error && <p className="filter-error" role="alert">{error}</p>}
-  </form>;
+function Panel({ prefix, id, selected, children }) {
+  return <div className="chart-tab-panel" role="tabpanel" id={`${prefix}-panel-${id}`} aria-labelledby={`${prefix}-${id}`} hidden={selected !== id} tabIndex="0">{children}</div>;
 }
 
-function Historical({ history }) {
-  const h = history?.indicadores;
-  const risk = h?.por_estatus?.filter(row => row.categoria.replaceAll('_', ' ').toLowerCase() === 'en riesgo').reduce((total, row) => total + row.total, 0);
-  const cards = [
-    ['Personas registradas', h?.usuarios, 'Total de miembros en el padrón'],
-    ['Artistas', h?.artistas, h?.usuarios ? `${(h.artistas / h.usuarios * 100).toFixed(1)}% de la comunidad` : 'Miembros que se identifican como artistas'],
-    ['Miembros en riesgo', risk, 'Clasificación del padrón de origen'],
-    ['Mensajes del corte de 30 días', h?.mensajes_30d, 'Suma histórica registrada en el padrón'],
-  ];
-  return <section id="historico" className="historical-section" aria-labelledby="history-title"><div className="section-heading"><div><p className="eyebrow">CONTEXTO DE LA COMUNIDAD</p><h2 id="history-title">La comunidad en números</h2><p>Una fotografía del padrón original para entender a las personas detrás de la actividad.</p></div><span className="section-source historical">Histórico · REST</span></div>
-    <div className="historical-metrics">{cards.map(([label, value, detail]) => <article key={label}><span>{label}</span><strong>{formatNumber(value)}</strong><p>{detail}</p></article>)}</div>
-    <div className="chart-grid"><ChartCard title="Estado de participación" subtitle="Distribución de los miembros según el padrón." source="REST"><DonutChart data={h?.por_estatus} label="Miembros por estado de participación" loading={!h}/></ChartCard><ChartCard title="Plataformas de la comunidad" subtitle="Plataforma principal de cada miembro." source="REST"><BarChart data={h?.por_plataforma} label="Miembros por plataforma principal" loading={!h}/></ChartCard><ChartCard title="Intereses que nos reúnen" subtitle="Los 10 intereses principales con más miembros." source="REST"><BarChart data={h?.por_interes} label="Miembros por interés principal" loading={!h}/></ChartCard><ChartCard title="Rangos de edad" subtitle="Composición de la comunidad por rango de edad." source="REST"><BarChart data={h?.por_rango_edad} label="Miembros por rango de edad" loading={!h}/></ChartCard></div><p className="section-footnote">Este bloque se consulta al abrir el dashboard. Los cambios en las interacciones no modifican los indicadores del padrón histórico.</p>
-  </section>;
-}
-
-export default function ActivityPanel({ expire, history }) {
-  const { data, options, status, event, warning, applyFilters } = useRealtime(expire);
+export default function ActivityPanel({ view, live, history, historyError }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const transition = useMotion();
+  const { data, options, status, event, warning, confirmedFilters, applyFilters } = live;
   const [applied, setApplied] = useState(cleanFilters);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterVersion, setFilterVersion] = useState(0);
+  const [selected, setSelected] = useState('canales');
+  useLayoutEffect(() => {
+    const tab = location.state?.exploreTab;
+    if (view === 'explorar' && ['canales', 'temas', 'tendencia', 'horarios', 'registros'].includes(tab)) setSelected(tab);
+  }, [location.key, view]);
+  function changeExploreTab(tab) { setSelected(tab); navigate('/dashboard/explorar', { replace: true, state: { exploreTab: tab } }); }
+  const filterButton = useRef(null);
+  const selections = useRef([]);
+  const [undoCount, setUndoCount] = useState(0);
+  const activeFilters = Object.entries(applied).filter(([, value]) => value);
+  const displayedFilters = Object.entries(filterDraft(confirmedFilters)).filter(([, value]) => value);
+  const isActivity = view === 'resumen' || view === 'explorar';
   const labels = { conectado: 'En vivo', conectando: 'Conectando…', reconectando: 'Reconectando…', sincronizando: 'Actualización pendiente', filtrando: 'Aplicando filtros…' };
   const actions = { creada: 'Interacción creada', modificada: 'Interacción modificada', eliminada: 'Interacción eliminada' };
   const metrics = [
-    ['Interacciones', formatNumber(data?.total_interacciones), 'Registros que coinciden con los filtros', '↗'],
-    ['Participantes', formatNumber(data?.usuarios_participantes), 'Personas distintas con actividad', '◎'],
-    ['Sentimiento promedio', data?.sentimiento_promedio == null ? '—' : Number(data.sentimiento_promedio).toFixed(3), 'Promedio de sentimiento · escala −1 a 1', '≈'],
-    ['Reacciones recibidas', formatNumber(data?.reacciones_recibidas), 'Suma de las reacciones de estos registros', '♡'],
+    ['Interacciones', data?.total_interacciones, 'Registros en esta selección', 0, 'total_interacciones'],
+    ['Participantes', data?.usuarios_participantes, 'Personas distintas con actividad', 0, 'usuarios_participantes'],
+    ['Sentimiento promedio', data?.sentimiento_promedio, 'Puntuación media de los registros (−1 a +1)', 3, 'sentimiento_promedio'],
+    ['Reacciones recibidas', data?.reacciones_recibidas, 'Suma de reacciones recibidas', 0, 'reacciones_recibidas'],
   ];
-  const activeFilters = Object.entries(applied).filter(([, value]) => value);
   const loading = !data;
+  const peakDays = leaders(data?.por_dia);
+  function appliedFilters(filters, restoreFocus = false) { setApplied(filters); setFilterOpen(false); if (restoreFocus) filterButton.current?.focus({ preventScroll: true }); }
+  function selectFilters(next, restoreFocus = false) {
+    const request = filterRequest(next);
+    const previous = filterDraft(confirmedFilters);
+    if (JSON.stringify(request) !== JSON.stringify(filterRequest(previous))) { selections.current = [...selections.current.slice(-9), previous]; setUndoCount(selections.current.length); }
+    if (status !== 'conectado' || JSON.stringify(request) !== JSON.stringify(filterRequest(previous))) applyFilters(request);
+    appliedFilters(next, restoreFocus); setFilterVersion(previous => previous + 1);
+  }
+  function undoSelection() {
+    const previous = selections.current.pop();
+    if (!previous) return;
+    setUndoCount(selections.current.length); applyFilters(filterRequest(previous)); appliedFilters(previous, true); setFilterVersion(value => value + 1);
+  }
+  function explore(tab, field, value) {
+    if (value) selectFilters({ ...filterDraft(confirmedFilters), [field]: value });
+    transition(() => { setSelected(tab); navigate('/dashboard/explorar', { state: { exploreTab: tab } }); }, 'page');
+  }
+  function toggleCategory(field, value) { selectFilters({ ...filterDraft(confirmedFilters), [field]: confirmedFilters?.[field] === value ? '' : value }); }
+  function chooseDay(day) { const draft = filterDraft(confirmedFilters); const clear = draft.inicio === day && draft.fin === day; selectFilters({ ...draft, inicio: clear ? '' : day, fin: clear ? '' : day }); }
+  function chooseHour(row) { const same = confirmedFilters?.dia_semana === row.dia_semana && confirmedFilters?.hora === row.hora; selectFilters({ ...filterDraft(confirmedFilters), dia_semana: same ? '' : String(row.dia_semana), hora: same ? '' : String(row.hora) }); }
+  function chooseDimension(field, value) { selectFilters({ ...filterDraft(confirmedFilters), [field]: String(confirmedFilters?.[field]) === value ? '' : value }); }
+  const pending = status !== 'conectado';
+  const selectedDay = confirmedFilters?.inicio?.slice(0, 10) === confirmedFilters?.fin?.slice(0, 10) ? confirmedFilters?.inicio?.slice(0, 10) : null;
   return <>
-    <section id="actividad" className="activity-section" aria-labelledby="activity-title">
-      <div className="section-heading"><div><p className="eyebrow">EL PULSO DE TU COMUNIDAD</p><h2 id="activity-title">Actividad en tiempo real</h2><p>Explora lo que ocurre, reconoce patrones y encuentra oportunidades para conectar.</p></div><span className={`live-status ${status}`} role="status"><span/>{labels[status]}</span></div>
-      <Filters options={options} status={status} applyFilters={applyFilters} onApplied={setApplied}/>
-      <div className="selection-info"><div className="filter-chips">{activeFilters.length ? activeFilters.map(([key, value]) => <span key={key}>{({ inicio: 'Desde', fin: 'Hasta', canal: 'Canal', tipo: 'Tipo', tema: 'Tema' })[key]}: {categoryLabel(value)}</span>) : <span className="all-data">Todos los registros disponibles</span>}</div><span className="section-source">WebSocket</span></div>
-      {status !== 'conectado' && data && <p className="sync-note">Mostrando la última lectura recibida. Esperando la conexión con el servidor.</p>}
-      {warning && <p className="sync-note" role="alert">{warning}</p>}
-      <div className="metric-grid">{metrics.map(([label, value, detail, icon]) => <article className="metric-card" key={label}><div className="metric-top"><h3>{label}</h3><span aria-hidden="true">{icon}</span></div><strong>{value}</strong><p>{detail}</p></article>)}</div>
+    <section className="activity-view" hidden={!isActivity} aria-label="Indicadores de actividad">
+      <div className="activity-toolbar"><div><span className={`live-status ${status}`} role="status"><span/>{labels[status]}</span></div><div className="selection-tools">{view === 'resumen' && <Link className="inline-action" to="/dashboard/explorar">Explorar estos datos<Icon name="arrow" width="16" height="16"/></Link>}<button ref={filterButton} type="button" className={`secondary-button filter-toggle ${filterOpen ? 'is-open' : ''}`} aria-expanded={filterOpen} aria-controls="activity-filters" onClick={() => setFilterOpen(!filterOpen)}><Icon name="filter"/>Filtros{activeFilters.length ? ` (${activeFilters.length})` : ''}<span aria-hidden="true">⌄</span></button></div></div>
+      <ActivityFilters key={filterVersion} open={filterOpen} initial={applied} options={options} range={data?.rango_datos} pending={status === 'filtrando'} onApply={draft => selectFilters(draft, true)} onClose={() => { setFilterOpen(false); filterButton.current?.focus({ preventScroll: true }); }}/>
+      {data?.rango_datos?.inicio && <p className="available-range">Datos disponibles del {date(data.rango_datos.inicio)} al {date(data.rango_datos.fin)} · Horarios en UTC.</p>}
+      {status !== 'conectado' && data && <p className="sync-note">{status === 'filtrando' ? 'Actualizando tu selección. Las cifras visibles corresponden a la lectura anterior.' : 'Mostrando la última lectura recibida. Esperando la conexión con el servidor.'}</p>}
+      {warning && <div className="sync-note sync-recovery" role="alert"><p>{warning}</p><button type="button" className="secondary-button" onClick={() => selectFilters(filterDraft(confirmedFilters), true)}>{data ? "Recuperar selección anterior" : "Reintentar lectura"}</button></div>}
+      <div className="metric-grid">{metrics.map(([label, value, detail, decimals, field]) => <article className={`metric-card ${loading ? "is-loading" : ""}`} key={label}><div className="metric-top"><h3>{label}</h3></div><FluidNumber fromZero className="metric-value" value={value} decimals={decimals}/><p>{detail}</p><MetricDelta comparison={data?.comparacion} field={field} value={value}/></article>)}</div>
+      {data?.comparacion && <p className="comparison-context">{data.comparacion.disponible ? `Comparación con ${date(data.comparacion.inicio_anterior)} a ${date(data.comparacion.fin_anterior)} · mismos filtros, ${data.comparacion.dias} días UTC. Las variaciones indican dirección, no una mejora automática.` : data.comparacion.motivo}</p>}
+      <details className="metric-explainer"><summary>Cómo se calculan estos indicadores</summary><dl><div><dt>Interacciones</dt><dd>Cuenta los registros que cumplen los filtros para medir el volumen de actividad. Cada mensaje, comentario, reacción, encuesta o confirmación de evento cuenta una vez.</dd></div><div><dt>Participantes</dt><dd>Cuenta personas distintas con al menos una interacción en la selección para saber cuántas aportaron actividad. Una persona con varios registros cuenta una sola vez.</dd></div><div><dt>Sentimiento promedio</dt><dd>Resume las puntuaciones de sentimiento que ya vienen en los datos: suma de puntuaciones dividida entre el número de interacciones. Escala de −1 a +1. No es un porcentaje de satisfacción. Un cero puede mezclar puntuaciones positivas y negativas. Sin registros, no se calcula un promedio.</dd></div><div><dt>Reacciones recibidas</dt><dd>Suma las reacciones que recibieron los registros seleccionados para medir su respuesta acumulada. Por ejemplo, 3 registros con 2, 5 y 0 reacciones suman 7. Este total no cuenta personas únicas ni equivale al número de registros de tipo reacción.</dd></div></dl></details>
       <div className="activity-update" aria-live="polite">{event ? <><span><i/>{actions[event.operation] || 'Lectura recibida'}{event.id ? ` · ${event.id}` : ''}</span><time dateTime={event.date}>Actualizado a las {new Date(event.date).toLocaleTimeString('es-MX')}</time></> : <span>Esperando la lectura de actividad…</span>}</div>
+      {data?.total_interacciones === 0 && <div className="empty-selection" role="status"><strong>No encontramos interacciones con estos filtros.</strong><p>Amplía las fechas o prueba otro canal o tema.</p><button className="secondary-button" disabled={status === 'filtrando'} onClick={() => selectFilters(cleanFilters)}>Ver todos los registros</button></div>}
     </section>
-    <section id="distribucion" className="distribution-section" aria-labelledby="distribution-title"><div className="section-heading"><div><p className="eyebrow">DE LOS DATOS A LAS CONEXIONES</p><h2 id="distribution-title">Así participa la comunidad</h2><p>Estas visualizaciones comparten los filtros de actividad y se actualizan automáticamente.</p></div></div>
-      {data?.total_interacciones === 0 && <div className="empty-selection" role="status"><strong>No encontramos interacciones con estos filtros.</strong><p>Prueba con otro canal, tema o intervalo de fechas.</p></div>}
-      <div className="chart-grid"><ChartCard title="Dónde ocurre la conversación" subtitle="Interacciones registradas por canal." source="WebSocket"><BarChart data={data?.por_canal} label="Interacciones por canal" loading={loading}/></ChartCard><ChartCard title="Formas de participar" subtitle="Proporción de cada tipo de interacción." source="WebSocket"><DonutChart data={data?.por_tipo} label="Distribución de tipos de interacción" loading={loading}/></ChartCard><ChartCard title="El ritmo de la comunidad" subtitle="Evolución diaria. Puntos en los días con registros · UTC." source="WebSocket" className="chart-wide"><TrendChart data={data?.por_dia} loading={loading}/></ChartCard><ChartCard title="Temas que generan conversación" subtitle="Los 10 temas con mayor número de interacciones." source="WebSocket"><BarChart data={data?.por_tema} label="Interacciones por tema" loading={loading}/></ChartCard><ChartCard title="Una lectura del sentimiento" subtitle="Promedio de los registros seleccionados, de −1 a 1." source="WebSocket"><div className="sentiment-reading"><strong>{data?.sentimiento_promedio == null ? '—' : Number(data.sentimiento_promedio).toFixed(3)}</strong><div className="sentiment-track"><span style={{ display: data?.sentimiento_promedio == null ? 'none' : undefined, left: `${((data?.sentimiento_promedio ?? 0) + 1) / 2 * 100}%` }}/></div><div className="sentiment-scale"><span>−1 · Negativo</span><span>0</span><span>+1 · Positivo</span></div><p>{data?.total_interacciones ? `Calculado sobre ${formatNumber(data.total_interacciones)} interacciones.` : 'Sin promedio disponible hasta recibir registros.'}</p></div></ChartCard><ChartCard title="Los momentos de mayor actividad" subtitle="Interacciones por día de la semana y hora. Zona horaria UTC." source="WebSocket" className="chart-wide"><Heatmap data={data?.actividad_semanal} loading={loading}/></ChartCard></div>
-      {data?.rango_datos?.inicio && <p className="section-footnote">Datos disponibles del {date(data.rango_datos.inicio)} al {date(data.rango_datos.fin)} · Las fechas y el mapa de calor utilizan UTC.</p>}
+    <SelectionSummary hidden={!isActivity} filters={confirmedFilters} total={data?.total_interacciones} pending={pending} undoCount={undoCount} onUndo={undoSelection} onClear={() => selectFilters(cleanFilters, true)} onRemove={key => selectFilters({ ...filterDraft(confirmedFilters), [key]: "" }, true)}/>
+    <section className="overview-view" hidden={view !== 'resumen'} aria-label="Resumen de la comunidad"><div className="analysis-main"><ChartCard className="main-trend" title="La conversación a lo largo del tiempo" subtitle="Interacciones por día en UTC. Puntos en los días con registros."><TrendChart data={data?.por_dia} loading={loading} onSelect={chooseDay} selected={selectedDay} disabled={pending}/>{peakDays.length > 0 && <p className="chart-reading">{peakDays.length === 1 ? <>Mayor actividad el <strong>{date(peakDays[0].fecha)}</strong>: {formatNumber(peakDays[0].total)} {interactionLabel(peakDays[0].total)}.</> : <>{peakDays.length} días comparten el máximo de {formatNumber(peakDays[0].total)} {interactionLabel(peakDays[0].total)}.</>}</p>}</ChartCard><ActivityInsights data={data} filters={confirmedFilters} pending={status !== 'conectado'} onCategory={(field, value) => explore(field === 'canal' ? 'canales' : 'temas', field, value)} onHours={() => explore('horarios')}/></div><div className="analysis-context"><ChartCard title="Cómo participa la comunidad" subtitle="Distribución de los tipos de interacción de esta selección."><DonutChart data={data?.por_tipo} label="Distribución de tipos de interacción" loading={loading} onSelect={value => toggleCategory('tipo', value)} selected={confirmedFilters?.tipo} disabled={pending}/></ChartCard><HistoricalContext history={history} error={historyError}/></div></section>
+    <section className="explore-view" hidden={view !== 'explorar'} aria-label="Explorar interacciones"><ViewTabs label="Visualizaciones de actividad" idPrefix="explorar" selected={selected} onChange={changeExploreTab} tabs={[{ id: 'canales', label: 'Canales y tipos' }, { id: 'temas', label: 'Temas' }, { id: 'tendencia', label: 'Tendencia' }, { id: 'horarios', label: 'Mapa de calor' }, { id: 'registros', label: 'Registros' }]}/>
+      <Panel prefix="explorar" id="canales" selected={selected}><div className="chart-grid"><ChartCard title="Dónde ocurre la conversación" subtitle="Selecciona un canal para filtrar toda la actividad."><BarChart data={data?.por_canal} label="Interacciones por canal" loading={loading} onSelect={value => toggleCategory('canal', value)} selected={confirmedFilters?.canal} disabled={pending}/></ChartCard><ChartCard title="Formas de participar" subtitle="Selecciona un tipo en la leyenda para aplicar el filtro."><DonutChart data={data?.por_tipo} label="Distribución de tipos de interacción" loading={loading} onSelect={value => toggleCategory('tipo', value)} selected={confirmedFilters?.tipo} disabled={pending}/></ChartCard></div></Panel>
+      <Panel prefix="explorar" id="temas" selected={selected}><TopicAnalysis data={data} loading={loading} pending={pending} filters={confirmedFilters} onTopic={value => toggleCategory('tema', value)}/></Panel>
+      <Panel prefix="explorar" id="tendencia" selected={selected}><TrendAnalysis data={data} loading={loading} pending={pending} selectedDay={selectedDay} onDay={chooseDay}/></Panel>
+      <Panel prefix="explorar" id="horarios" selected={selected}><HourAnalysis data={data} loading={loading} pending={pending} filters={confirmedFilters} onCell={chooseHour} onDimension={chooseDimension}/></Panel>
+      <Panel prefix="explorar" id="registros" selected={selected}><InteractionRecords active={view === 'explorar' && selected === 'registros'} filters={confirmedFilters} snapshot={data} pending={pending} hasFilters={displayedFilters.length > 0} onClearFilters={() => selectFilters(cleanFilters, true)}/></Panel>
+      {data?.rango_datos?.inicio && <p className="section-footnote">Datos disponibles del {date(data.rango_datos.inicio)} al {date(data.rango_datos.fin)} · Fechas y horas en UTC.</p>}
     </section>
-    <Historical history={history}/>
   </>;
+}
+
+
+function MetricDelta({ comparison, field, value }) {
+  if (!comparison?.disponible) return null;
+  const previous = comparison.indicadores[field];
+  if (previous == null || value == null) return <span className="metric-delta">Sin promedio comparable</span>;
+  if (field !== 'sentimiento_promedio' && previous === 0) return <span className="metric-delta">{value ? 'Sin base porcentual (antes: 0)' : 'Sin variación (ambos: 0)'}</span>;
+  const delta = field === 'sentimiento_promedio' ? value - previous : (value - previous) / previous * 100;
+  return <span className={`metric-delta ${delta > 0 ? 'rising' : delta < 0 ? 'falling' : ''}`}>{delta > 0 ? '↗ +' : delta < 0 ? '↘ ' : '→ '}{delta.toFixed(field === 'sentimiento_promedio' ? 3 : 1)}{field === 'sentimiento_promedio' ? ' puntos' : '%'} <small>vs. periodo anterior</small></span>;
 }

@@ -2,18 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './api';
 
 export function useRealtime(expire) {
-  const [state, setState] = useState({ data: null, status: 'conectando', event: null, warning: '' });
+  const [state, setState] = useState({ data: null, confirmedFilters: {}, status: 'conectando', event: null, warning: '' });
   const subscription = useRef({ filters: {}, request: 0, socket: null });
   const applyFilters = useCallback(filters => {
     const current = subscription.current;
     current.filters = filters; current.request += 1;
-    setState(previous => ({ ...previous, data: null, event: null, warning: '', status: 'filtrando' }));
+    setState(previous => ({ ...previous, warning: '', status: 'filtrando' }));
     if (current.socket?.readyState === WebSocket.OPEN) current.socket.send(JSON.stringify({ tipo: 'suscribir', filtros: filters, solicitud: current.request }));
   }, []);
   useEffect(() => {
     let active = true, socket, reconnect, heartbeat, retryData;
     let attempt = 0, server, revision = -1, lastReceived = 0;
-    const update = value => { if (active) setState(previous => ({ ...previous, ...value })); };
+    const update = value => { if (active) setState(previous => ({ ...previous, ...(typeof value === 'function' ? value(previous) : value) })); };
     function connect() {
       if (!active) return;
       update({ status: attempt ? 'reconectando' : 'conectando' });
@@ -40,7 +40,7 @@ export function useRealtime(expire) {
           return;
         }
         if (message.tipo === 'error_datos') {
-          update({ status: 'sincronizando', warning: 'No se pudo actualizar la actividad. Conservamos la última lectura mientras reintentamos.' });
+          update(previous => ({ status: 'sincronizando', warning: previous.data ? 'No se pudo actualizar la actividad. Conservamos la última lectura mientras reintentamos.' : 'Todavía no se pudo cargar la actividad. Reintentamos la conexión; también puedes solicitar otra lectura.' }));
           clearTimeout(retryData);
           retryData = setTimeout(() => {
             if (active && current.readyState === WebSocket.OPEN) current.send(JSON.stringify({ tipo: 'solicitar_estado' }));
@@ -51,7 +51,7 @@ export function useRealtime(expire) {
         if (server === message.servidor && message.revision < revision) return;
         server = message.servidor; revision = message.revision; attempt = 0;
         clearTimeout(retryData);
-        update({ data: message.indicadores, options: message.indicadores.opciones_filtros || {}, status: 'conectado', warning: '',
+        update({ data: message.indicadores, confirmedFilters: { ...subscription.current.filters }, options: message.indicadores.opciones_filtros || {}, status: 'conectado', warning: '',
           event: { operation: message.operacion, id: message.id_interaccion, date: message.fecha } });
       };
       current.onerror = () => { /* onclose comprueba la sesión y reintenta. */ };

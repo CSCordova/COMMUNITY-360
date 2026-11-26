@@ -1,6 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, Response
-from pydantic import BaseModel, Field, SecretStr, field_validator
-from backend.auth.accounts import buscar_cuenta
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
+from backend.auth.accounts import buscar_cuenta, cambiar_password
 from backend.auth.dependencies import error_credenciales, obtener_cuenta, validar_origen
 from backend.auth.security import crear_token, generar_hash, verificar_password
 from backend.core.config import COOKIE_NAME, COOKIE_SECURE, TOKEN_MINUTES
@@ -21,6 +21,19 @@ class LoginRequest(BaseModel):
         return valor.strip() if isinstance(valor, str) else valor
 
 
+class CambioPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    password_actual: SecretStr = Field(min_length=1, max_length=1024)
+    password_nueva: SecretStr = Field(min_length=8, max_length=14)
+    confirmacion: SecretStr = Field(min_length=8, max_length=14)
+
+    @model_validator(mode="after")
+    def confirmar(self):
+        if self.password_nueva.get_secret_value() != self.confirmacion.get_secret_value():
+            raise ValueError("Las contraseñas nuevas no coinciden.")
+        return self
+
+
 @router.post("/login", dependencies=[Depends(validar_origen)])
 def login(datos: LoginRequest, response: Response):
     with conectar_turso() as db:
@@ -37,6 +50,20 @@ def login(datos: LoginRequest, response: Response):
 @router.get("/me")
 def mi_cuenta(cuenta: dict = Depends(obtener_cuenta)):
     return {"id_cuenta": cuenta["id_cuenta"], "usuario": cuenta["usuario"]}
+
+
+@router.post("/password", dependencies=[Depends(validar_origen)])
+def cambiar_password_web(datos: CambioPasswordRequest, response: Response, tareas: BackgroundTasks,
+                         cuenta: dict = Depends(obtener_cuenta), hub: DashboardHub = Depends(obtener_hub)):
+    try:
+        with conectar_turso() as db:
+            cambiar_password(db, cuenta["usuario"], datos.password_actual.get_secret_value(),
+                             datos.password_nueva.get_secret_value())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from None
+    tareas.add_task(hub.cerrar_cuenta, cuenta["id_cuenta"])
+    response.delete_cookie(COOKIE_NAME, path="/", httponly=True, secure=COOKIE_SECURE, samesite="strict")
+    return {"mensaje": "Contraseña actualizada. Inicia sesión nuevamente."}
 
 
 @router.post("/logout", dependencies=[Depends(validar_origen)])
