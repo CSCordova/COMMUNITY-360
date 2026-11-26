@@ -1,0 +1,17 @@
+.git
+.env
+.env.*
+.venv
+**/__pycache__
+**/*.pyc
+**/node_modules
+frontend/dist
+frontend/test-results
+tmp
+datos
+credenciales
+evidencias
+pruebas
+*.md
+*.pdf
+*.log

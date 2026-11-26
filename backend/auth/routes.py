@@ -1,0 +1,47 @@
+from fastapi import APIRouter, Depends, Response
+from pydantic import BaseModel, Field, SecretStr, field_validator
+from backend.auth.accounts import buscar_cuenta
+from backend.auth.dependencies import error_credenciales, obtener_cuenta, validar_origen
+from backend.auth.security import crear_token, generar_hash, verificar_password
+from backend.core.config import COOKIE_NAME, COOKIE_SECURE, TOKEN_MINUTES
+from backend.database.turso import conectar_turso
+
+router = APIRouter(prefix="/auth", tags=["Autenticación"])
+HASH_FICTICIO = generar_hash("cuenta-inexistente-solo-comparacion")
+
+
+class LoginRequest(BaseModel):
+    usuario: str = Field(min_length=4, max_length=32)
+    password: SecretStr = Field(min_length=1, max_length=1024)
+
+    @field_validator("usuario", mode="before")
+    @classmethod
+    def normalizar_usuario(cls, valor):
+        return valor.strip() if isinstance(valor, str) else valor
+
+
+@router.post("/login", dependencies=[Depends(validar_origen)])
+def login(datos: LoginRequest, response: Response):
+    with conectar_turso() as db:
+        cuenta = buscar_cuenta(db, datos.usuario)
+    valido = verificar_password(datos.password.get_secret_value(), cuenta[2] if cuenta else HASH_FICTICIO)
+    if not cuenta or cuenta[3] != 1 or not valido:
+        raise error_credenciales()
+    token = crear_token(cuenta[0], cuenta[4])
+    response.set_cookie(COOKIE_NAME, token, max_age=TOKEN_MINUTES * 60,
+                        httponly=True, secure=COOKIE_SECURE, samesite="strict", path="/")
+    return {"access_token": token, "token_type": "bearer", "expires_in": TOKEN_MINUTES * 60}
+
+
+@router.get("/me")
+def mi_cuenta(cuenta: dict = Depends(obtener_cuenta)):
+    return {"id_cuenta": cuenta["id_cuenta"], "usuario": cuenta["usuario"]}
+
+
+@router.post("/logout", dependencies=[Depends(validar_origen)])
+def logout(response: Response, cuenta: dict = Depends(obtener_cuenta)):
+    with conectar_turso() as db:
+        db.execute("UPDATE cuentas_acceso SET token_version = token_version + 1 WHERE id_cuenta = ?",
+                   (cuenta["id_cuenta"],))
+    response.delete_cookie(COOKIE_NAME, path="/", httponly=True, secure=COOKIE_SECURE, samesite="strict")
+    return {"mensaje": "Sesiones de la cuenta cerradas correctamente."}

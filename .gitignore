@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+credenciales/
+datos/originales/
+datos/depurados/
+*.log
+*.sqlite
+*.sqlite3
+node_modules/
+frontend/dist/
+frontend/test-results/
+tmp/
+.env.*
+!.env.example

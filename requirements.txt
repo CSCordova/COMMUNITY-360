@@ -1,0 +1,9 @@
+
+tzdata>=2025.2
+python-dotenv>=1.0,<2
+firebase-admin>=7,<9
+requests>=2.33,<3
+fastapi>=0.165,<0.166
+uvicorn>=0.54,<0.55
+PyJWT>=2.15,<3
+pwdlib[argon2]>=0.4,<0.5
