@@ -107,6 +107,8 @@ describe('Actividad en tiempo real', () => {
     expect(screen.queryByText('207')).not.toBeInTheDocument();
     act(() => socket.emit(snapshot(0)));
     expect(await screen.findByText('207')).toBeInTheDocument();
+    expect(screen.queryByText('Cómo se calculan estos indicadores')).not.toBeInTheDocument();
+    expect(screen.queryByText('Lectura recibida')).not.toBeInTheDocument();
     const count = fetch.mock.calls.length;
     act(() => socket.emit({ ...snapshot(1, { total_interacciones: 208, sentimiento_promedio: -0.3 }), operacion: 'creada', id_interaccion: 'I9000001' }));
     expect(screen.getByText('208')).toBeInTheDocument();

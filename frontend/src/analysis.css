@@ -28,13 +28,8 @@
 .workspace .metric-card h3 { color: #c4ccd7; font-size: .8rem; font-weight: 500; margin: 0; }
 .workspace .metric-card .metric-value { font-family: Bahnschrift, "Segoe UI", sans-serif; font-size: 1.9rem; font-weight: 450; margin-top: 8px; letter-spacing: -.04em; }
 .workspace .metric-card p, .workspace .metric-card:first-child p { font-size: .72rem; color: #94a3b8; margin-top: 5px; line-height: 1.5; }
-.metric-explainer { margin-top: 10px; font-size: .75rem; color: #94a3b8; }
-.metric-explainer summary { width: fit-content; cursor: pointer; padding-block: 5px; }
-.metric-explainer summary:hover { color: #d3e5bd; }
-.metric-explainer dl { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 30px; background: #14171d; border-radius: 8px; padding: 20px; margin: 10px 0; }
-.metric-explainer dt { color: #f8fafc; font-weight: 600; margin-bottom: 5px; }
-.metric-explainer dd { line-height: 1.7; margin: 0; max-width: 65ch; }
 .workspace .activity-update { font-size: .71rem; margin: 9px 0 20px; }
+.activity-update time:only-child { margin-inline-start: auto; }
 .analysis-main { display: grid; grid-template-columns: minmax(0,1.85fr) minmax(245px,1fr); gap: 30px; align-items: start; }
 .workspace .chart-card { border-radius: 9px; min-height: 0; padding: 22px; }
 .workspace .chart-card h3 { font-size: 1rem; font-weight: 550; }
@@ -127,7 +122,6 @@
   .reading-heading { margin-bottom: 10px; }
   .reading-item { padding: 14px 0; }
   .reading-item>strong { font-size: 1.15rem; }
-  .metric-explainer dl { grid-template-columns: minmax(0,1fr); }
   .workspace .analysis-context .donut-layout { gap: 15px; }
   .workspace .analysis-context .donut-layout svg { width: 35%; }
   .workspace .chart-legend li, .workspace .chart-legend strong { font-size: .75rem; }
